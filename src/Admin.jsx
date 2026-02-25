@@ -1,0 +1,357 @@
+import React, { useState, useEffect } from 'react';
+import {
+    Save,
+    Plus,
+    Trash2,
+    ArrowLeft,
+    LogOut,
+    User,
+    CreditCard,
+    Package,
+    ExternalLink,
+    ClipboardList,
+    CheckCircle,
+    MessageCircle,
+    Upload,
+    Mail,
+    QrCode
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+
+function Admin({ initialData, onLogout, onSave }) {
+    const [data, setData] = useState(initialData);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [activeAdminTab, setActiveAdminTab] = useState('profile');
+
+    const handleUpload = async (file, callback) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const response = await fetch('./api/manage.php?action=upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                callback(result.url);
+            } else {
+                alert('Upload gagal: ' + result.message);
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan saat upload');
+        }
+    };
+
+    useEffect(() => {
+        if (activeAdminTab === 'orders') {
+            fetchOrders();
+        }
+    }, [activeAdminTab]);
+
+    const fetchOrders = async () => {
+        try {
+            const response = await fetch('./api/manage.php?action=get_orders');
+            const result = await response.json();
+            setOrders(result);
+        } catch (err) {
+            console.error("Gagal mengambil data pesanan");
+        }
+    };
+
+    const handleSave = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('./api/manage.php?action=save_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('Perubahan berhasil disimpan!');
+                onSave(data);
+            }
+        } catch (err) {
+            alert('Gagal menyimpan data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const approveOrder = async (orderId, waLink) => {
+        if (!confirm('Tandai sudah lunas dan buka WhatsApp untuk kirim link produk?')) return;
+        try {
+            const response = await fetch('./api/manage.php?action=approve_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                window.open(waLink, '_blank');
+                fetchOrders();
+            }
+        } catch (err) {
+            alert('Gagal menyetujui pesanan');
+        }
+    };
+
+    const updateProduct = (id, field, value) => {
+        setData({
+            ...data,
+            products: data.products.map(p => p.id === id ? { ...p, [field]: value } : p)
+        });
+    };
+
+    const addProduct = () => {
+        const newId = data.products.length > 0 ? Math.max(...data.products.map(p => p.id)) + 1 : 1;
+        setData({
+            ...data,
+            products: [...data.products, { id: newId, name: 'Produk Baru', price: 0, image: '', driveUrl: '' }]
+        });
+    };
+
+    const removeProduct = (id) => {
+        setData({
+            ...data,
+            products: data.products.filter(p => p.id !== id)
+        });
+    };
+
+    const updatePayment = (field, value) => {
+        setData({
+            ...data,
+            paymentSettings: { ...data.paymentSettings, [field]: value }
+        });
+    };
+
+    return (
+        <div className="container" style={{ maxWidth: '800px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <h1 style={{ fontSize: '1.5rem' }}>Admin Panel</h1>
+                    <a href="./" target="_blank" style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.9rem' }}>
+                        <ExternalLink size={14} /> Lihat Situs
+                    </a>
+                </div>
+                <button className="glass-card" onClick={onLogout} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }}>
+                    <LogOut size={18} /> Logout
+                </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                <button onClick={() => setActiveAdminTab('profile')} className={`glass-card admin-tab ${activeAdminTab === 'profile' ? 'active' : ''}`}>
+                    <User size={18} /> Profil
+                </button>
+                <button onClick={() => setActiveAdminTab('orders')} className={`glass-card admin-tab ${activeAdminTab === 'orders' ? 'active' : ''}`}>
+                    <ClipboardList size={18} /> Pesanan
+                </button>
+                <button onClick={() => setActiveAdminTab('links')} className={`glass-card admin-tab ${activeAdminTab === 'links' ? 'active' : ''}`}>
+                    <Plus size={18} /> Link Bio
+                </button>
+                <button onClick={() => setActiveAdminTab('products')} className={`glass-card admin-tab ${activeAdminTab === 'products' ? 'active' : ''}`}>
+                    <Package size={18} /> Katalog
+                </button>
+                <button onClick={() => setActiveAdminTab('payment')} className={`glass-card admin-tab ${activeAdminTab === 'payment' ? 'active' : ''}`}>
+                    <CreditCard size={18} /> Bayar
+                </button>
+            </div>
+
+            <div className="admin-content-area">
+                {activeAdminTab === 'profile' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>Pengaturan Profil</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                                <label className="admin-label">Nama Lengkap</label>
+                                <input className="admin-input" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="admin-label">Foto Profil</label>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
+                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <img src={data.avatar} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/80?text=Avatar'} />
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
+                                        <input className="admin-input" value={data.avatar} placeholder="URL Foto Profil" onChange={e => setData({ ...data, avatar: e.target.value })} />
+                                        <label className="btn-primary" style={{ padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                            <Upload size={18} />
+                                            <input type="file" hidden onChange={e => {
+                                                if (e.target.files[0]) handleUpload(e.target.files[0], (url) => setData({ ...data, avatar: url }));
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="admin-label">Bio / Deskripsi Singkat</label>
+                                <textarea className="admin-input" value={data.bio} onChange={e => setData({ ...data, bio: e.target.value })} rows={3} />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeAdminTab === 'orders' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        <h2 style={{ marginBottom: '16px', fontSize: '1.2rem' }}>Riwayat Pesanan</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {orders.length === 0 && <p className="glass-card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada pesanan.</p>}
+                            {orders.map(order => (
+                                <div key={order.id} className="glass-card" style={{ padding: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{order.id}</span>
+                                        <span style={{
+                                            fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px',
+                                            background: order.status === 'PAID' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                                            color: order.status === 'PAID' ? '#22c55e' : '#eab308'
+                                        }}>{order.status}</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
+                                        <div style={{ fontWeight: '600' }}>{order.customer} ({order.whatsapp})</div>
+                                        <div style={{ color: 'var(--text-muted)' }}>Produk: {order.product_name}</div>
+                                        <div style={{ color: 'var(--text-muted)' }}>Metode: {order.method} | Rp {order.amount.toLocaleString()}</div>
+                                    </div>
+                                    {order.status === 'PENDING' ? (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
+                                                <MessageCircle size={16} /> Verifikasi & Kirim ke WA
+                                            </button>
+                                            <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
+                                                Hubungi Saja
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button className="glass-card" style={{ flex: 2, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
+                                                <MessageCircle size={16} /> Kirim Ulang via WA
+                                            </button>
+                                            <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
+                                                Hubungi Saja
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeAdminTab === 'links' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 style={{ fontSize: '1.2rem' }}>Kelola Link Bio</h2>
+                            <button className="btn-primary" style={{ padding: '8px 16px' }} onClick={() => {
+                                const newId = data.links.length > 0 ? Math.max(...data.links.map(l => l.id)) + 1 : 1;
+                                setData({ ...data, links: [...data.links, { id: newId, title: 'Link Baru', url: '#' }] });
+                            }}>
+                                <Plus size={18} /> Tambah Link
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {data.links?.map(link => (
+                                <div key={link.id} className="glass-card" style={{ padding: '16px' }}>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <div style={{ flex: 1, display: 'flex', gap: '12px' }}>
+                                            <input className="admin-input" placeholder="Judul" value={link.title} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, title: e.target.value } : l) })} />
+                                            <input className="admin-input" placeholder="URL" value={link.url} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, url: e.target.value } : l) })} />
+                                        </div>
+                                        <button onClick={() => setData({ ...data, links: data.links.filter(l => l.id !== link.id) })} className="delete-btn"><Trash2 size={18} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeAdminTab === 'products' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 style={{ fontSize: '1.2rem' }}>Kelola Katalog Produk</h2>
+                            <button className="btn-primary" style={{ padding: '8px 16px' }} onClick={addProduct}>
+                                <Plus size={18} /> Tambah Produk
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {data.products.map(product => (
+                                <div key={product.id} className="glass-card" style={{ padding: '20px' }}>
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                                        <div style={{ width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                            <img src={product.image} alt="Product Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/100?text=Produk'} />
+                                        </div>
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            <input className="admin-input" placeholder="Judul Produk" value={product.name} onChange={e => updateProduct(product.id, 'name', e.target.value)} />
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <input className="admin-input" type="number" placeholder="Harga" value={product.price} onChange={e => updateProduct(product.id, 'price', parseInt(e.target.value) || 0)} />
+                                                <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
+                                                    <input className="admin-input" placeholder="URL Gambar" value={product.image} onChange={e => updateProduct(product.id, 'image', e.target.value)} />
+                                                    <label className="btn-primary" style={{ padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                                        <Upload size={18} />
+                                                        <input type="file" hidden onChange={e => {
+                                                            if (e.target.files[0]) handleUpload(e.target.files[0], (url) => updateProduct(product.id, 'image', url));
+                                                        }} />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <input className="admin-input" placeholder="Google Drive Link (Dikirim via WA)" value={product.driveUrl} onChange={e => updateProduct(product.id, 'driveUrl', e.target.value)} />
+                                        </div>
+                                        <button onClick={() => removeProduct(product.id)} className="delete-btn"><Trash2 size={20} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeAdminTab === 'payment' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>Konfigurasi Pembayaran</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div>
+                                <label className="admin-label">Detail Rekening Bank (BCA 1234xxx a/n John)</label>
+                                <input className="admin-input" value={data.paymentSettings.bank} onChange={e => updatePayment('bank', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className="admin-label">QRIS Payment (Upload Gambar)</label>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
+                                    <div style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                        <img src={data.paymentSettings.qrisUrl} alt="QRIS Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120?text=QRIS'} />
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <input className="admin-input" value={data.paymentSettings.qrisUrl} placeholder="URL Gambar QRIS" onChange={e => updatePayment('qrisUrl', e.target.value)} />
+                                        <label className="btn-primary" style={{ padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', width: 'fit-content' }}>
+                                            <Upload size={18} /> Upload QRIS Baru
+                                            <input type="file" hidden onChange={e => {
+                                                if (e.target.files[0]) handleUpload(e.target.files[0], (url) => updatePayment('qrisUrl', url));
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Menerima pembayaran melalui Transfer Bank dan QRIS (Manual).</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </div>
+
+            <div style={{ height: '100px' }}></div>
+            <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '800px', padding: '0 20px' }}>
+                <button className="btn-primary" style={{ width: '100%', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }} onClick={handleSave} disabled={loading}>
+                    <Save size={20} /> {loading ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
+                </button>
+            </div>
+
+            <style>{`
+                .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; }
+                .admin-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+                .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-muted); }
+                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; }
+                .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; }
+            `}</style>
+        </div>
+    );
+}
+
+export default Admin;
