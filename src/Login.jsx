@@ -13,8 +13,12 @@ function Login({ onLoginSuccess }) {
         setLoading(true);
         setError('');
 
+        const API_BASE = window.location.pathname.startsWith('/katalog/dist')
+            ? '/katalog/dist/api/manage.php'
+            : '/api/manage.php';
+
         try {
-            const response = await fetch('./api/manage.php?action=login', {
+            const response = await fetch(`${API_BASE}?action=login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })

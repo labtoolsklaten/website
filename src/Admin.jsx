@@ -24,11 +24,16 @@ function Admin({ initialData, onLogout, onSave }) {
     const [loading, setLoading] = useState(false);
     const [activeAdminTab, setActiveAdminTab] = useState('profile');
 
+    // Dynamic API Base URL
+    const API_BASE = window.location.pathname.startsWith('/katalog/dist')
+        ? '/katalog/dist/api/manage.php'
+        : '/api/manage.php';
+
     const handleUpload = async (file, callback) => {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const response = await fetch('./api/manage.php?action=upload', {
+            const response = await fetch(`${API_BASE}?action=upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -51,7 +56,7 @@ function Admin({ initialData, onLogout, onSave }) {
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch('./api/manage.php?action=get_orders');
+            const response = await fetch(`${API_BASE}?action=get_orders`);
             const result = await response.json();
             setOrders(result);
         } catch (err) {
@@ -62,7 +67,7 @@ function Admin({ initialData, onLogout, onSave }) {
     const handleSave = async () => {
         setLoading(true);
         try {
-            const response = await fetch('./api/manage.php?action=save_data', {
+            const response = await fetch(`${API_BASE}?action=save_data`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -82,7 +87,7 @@ function Admin({ initialData, onLogout, onSave }) {
     const approveOrder = async (orderId, waLink) => {
         if (!confirm('Tandai sudah lunas dan buka WhatsApp untuk kirim link produk?')) return;
         try {
-            const response = await fetch('./api/manage.php?action=approve_order', {
+            const response = await fetch(`${API_BASE}?action=approve_order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ order_id: orderId })

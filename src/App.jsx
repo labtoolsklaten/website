@@ -35,10 +35,15 @@ function HomePage() {
   const [orderComplete, setOrderComplete] = useState(null);
   const location = useLocation();
 
+  // Dynamic API Base URL
+  const API_BASE = window.location.pathname.startsWith('/katalog/dist')
+    ? '/katalog/dist/api/manage.php'
+    : '/api/manage.php';
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('./api/manage.php?action=get_data');
+        const response = await fetch(`${API_BASE}?action=get_data`);
         const data = await response.json();
         setUserData(data);
       } catch (err) {
@@ -55,7 +60,7 @@ function HomePage() {
     }
 
     try {
-      const response = await fetch('./api/manage.php?action=create_order', {
+      const response = await fetch(`${API_BASE}?action=create_order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -261,9 +266,13 @@ function AdminWrapper() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
+  const API_BASE = window.location.pathname.startsWith('/katalog/dist')
+    ? '/katalog/dist/api/manage.php'
+    : '/api/manage.php';
+
   useEffect(() => {
     if (isLoggedIn) {
-      fetch('./api/manage.php?action=get_data')
+      fetch(`${API_BASE}?action=get_data`)
         .then(res => res.json())
         .then(data => setUserData(data));
     }
@@ -275,7 +284,7 @@ function AdminWrapper() {
   };
 
   const handleLogout = async () => {
-    await fetch('./api/manage.php?action=logout');
+    await fetch(`${API_BASE}?action=logout`);
     localStorage.removeItem('admin_token');
     setIsLoggedIn(false);
     navigate('/');
@@ -288,8 +297,13 @@ function AdminWrapper() {
 }
 
 function App() {
+  // Detect basename dynamically: /katalog/dist/ for local, / for production
+  const basename = window.location.pathname.startsWith('/katalog/dist')
+    ? '/katalog/dist'
+    : '/';
+
   return (
-    <BrowserRouter basename="/katalog/dist/">
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin" element={<AdminWrapper />} />
