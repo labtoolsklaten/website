@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "set DEPLOY_TARGET=production && vite build",
+    "build:local": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
