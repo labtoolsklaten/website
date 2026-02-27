@@ -23,8 +23,18 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import Admin from './Admin';
 import Login from './Login';
 
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+};
+
 function HomePage() {
   const [showPayment, setShowPayment] = useState(null);
+  const [showDetail, setShowDetail] = useState(null);
+  const [detailImgIdx, setDetailImgIdx] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('info');
   const [customerName, setCustomerName] = useState('');
   const [customerWA, setCustomerWA] = useState('');
@@ -35,23 +45,42 @@ function HomePage() {
   const [orderComplete, setOrderComplete] = useState(null);
   const location = useLocation();
 
-  // Dynamic API Base URL
-  const API_BASE = window.location.pathname.startsWith('/katalog/dist')
-    ? '/katalog/dist/api/manage.php'
-    : '/api/manage.php';
+  // Ultra-robust detection for current app root
+  const getAppRoot = () => {
+    let path = window.location.pathname;
+    // Remove /admin or /index.html suffix to find the "dist" folder or app root
+    const root = path.split('/admin')[0].split('/index.html')[0].replace(/\/$/, '');
+    return root || '';
+  };
+
+  const APP_ROOT = getAppRoot();
+  const API_BASE = APP_ROOT + '/api/manage.php';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_BASE}?action=get_data`);
-        const data = await response.json();
-        setUserData(data);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          setUserData(data);
+        } catch (jsonErr) {
+          console.error("Invalid JSON response:", text);
+          throw new Error(`Format data salah. Awalan: ${text.substring(0, 50)}...`);
+        }
       } catch (err) {
         console.error("Failed to load data", err);
+        setUserData({
+          name: "Koneksi Bermasalah",
+          bio: `${err.message}`,
+          links: [],
+          products: []
+        });
       }
     };
     fetchData();
-  }, []);
+  }, [API_BASE]);
 
   const handleCreateOrder = async (product, method) => {
     if (!customerName || !customerWA || !customerEmail) {
@@ -155,20 +184,177 @@ function HomePage() {
             exit={{ opacity: 0, y: -10 }}
             className={storeView === 'grid' ? "product-grid" : "product-list"}
           >
-            {userData.products?.map(product => (
-              <div key={product.id} className={`glass-card product-card ${storeView === 'grid' ? 'grid-item' : 'list-item'}`} style={storeView === 'list' ? { display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '12px', gap: '16px' } : {}}>
-                <img src={product.image} alt={product.name} className="product-image" style={storeView === 'list' ? { width: '60px', height: '60px', borderRadius: '10px', marginBottom: 0 } : {}} />
-                <div className="product-info" style={storeView === 'list' ? { flex: 1, textAlign: 'left', marginBottom: 0 } : {}}>
-                  <h3 style={{ fontSize: storeView === 'list' ? '0.9rem' : '1rem', marginBottom: '2px' }}>{product.name}</h3>
-                  <div className="price-tag">Rp {product.price.toLocaleString('id-ID')}</div>
+            {userData.products?.map(product => {
+              const allImages = [product.image, ...(product.images || [])].filter(Boolean);
+              return (
+                <div key={product.id}
+                  className={`glass-card product-card ${storeView === 'grid' ? 'grid-item' : 'list-item'}`}
+                  style={storeView === 'list' ? { display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '12px', gap: '16px', cursor: 'pointer' } : { cursor: 'pointer' }}
+                  onClick={() => { setShowDetail(product); setDetailImgIdx(0); }}
+                >
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <img src={product.image} alt={product.name} className="product-image" style={storeView === 'list' ? { width: '60px', height: '60px', borderRadius: '10px', marginBottom: 0 } : {}} />
+                    {allImages.length > 1 && storeView === 'grid' && (
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', borderRadius: '20px', padding: '2px 8px', fontSize: '0.7rem', color: 'white' }}>
+                        +{allImages.length - 1}
+                      </div>
+                    )}
+                  </div>
+                  <div className="product-info" style={storeView === 'list' ? { flex: 1, textAlign: 'left', marginBottom: 0 } : {}}>
+                    <h3 style={{ fontSize: storeView === 'list' ? '0.9rem' : '1rem', marginBottom: '2px' }}>{product.name}</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: storeView === 'list' ? 'none' : 'block' }}>
+                      {product.description?.length > 60 ? product.description.substring(0, 60) + '...' : product.description}
+                    </p>
+                    <div className="price-tag">Rp {product.price.toLocaleString('id-ID')}</div>
+                  </div>
+                  <button
+                    className="btn-primary"
+                    style={{ padding: storeView === 'list' ? '8px 12px' : '8px 16px', fontSize: '0.8rem', width: storeView === 'grid' ? '100%' : 'auto', flexShrink: 0 }}
+                    onClick={(e) => { e.stopPropagation(); setShowDetail(product); setDetailImgIdx(0); }}
+                  >
+                    Detail
+                  </button>
                 </div>
-                <button className="btn-primary" style={{ padding: storeView === 'list' ? '8px 12px' : '8px 16px', fontSize: '0.8rem', width: storeView === 'grid' ? '100%' : 'auto' }} onClick={() => { setShowPayment(product); setCheckoutStep('info'); }}>Beli</button>
-              </div>
-            ))}
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* ===== PRODUCT DETAIL MODAL ===== */}
+      <AnimatePresence>
+        {showDetail && (
+          <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => { if (!lightboxOpen) setShowDetail(null); }}
+          >
+            <motion.div
+              className="glass-card modal-content"
+              initial={{ scale: 0.92, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 30 }}
+              style={{ padding: 0, overflow: 'hidden', maxWidth: '520px' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{showDetail.name}</h2>
+                <button onClick={() => setShowDetail(null)} className="close-btn" style={{ position: 'static', transform: 'none' }}><X size={20} /></button>
+              </div>
+
+              <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '20px' }}>
+                {/* Image Gallery */}
+                {(() => {
+                  const imgs = [showDetail.image, ...(showDetail.images || [])].filter(Boolean);
+                  return (
+                    <div style={{ marginBottom: '16px' }}>
+                      {/* Main Image */}
+                      <div
+                        style={{ width: '100%', aspectRatio: '4/3', borderRadius: '14px', overflow: 'hidden', background: 'rgba(0,0,0,0.3)', cursor: 'zoom-in', marginBottom: '10px', position: 'relative' }}
+                        onClick={() => setLightboxOpen(true)}
+                      >
+                        <img src={imgs[detailImgIdx] || showDetail.image} alt={showDetail.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '8px', padding: '4px 8px', fontSize: '0.7rem', color: 'white' }}>
+                          🔍 Klik untuk zoom
+                        </div>
+                      </div>
+                      {/* Thumbnail Strip */}
+                      {imgs.length > 1 && (
+                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                          {imgs.map((img, i) => (
+                            <div key={i}
+                              onClick={() => setDetailImgIdx(i)}
+                              style={{
+                                width: '60px', height: '60px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden',
+                                border: detailImgIdx === i ? '2px solid var(--primary)' : '2px solid rgba(255,255,255,0.1)',
+                                cursor: 'pointer', transition: 'border 0.2s'
+                              }}
+                            >
+                              <img src={img} alt={`thumb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* YouTube Preview */}
+                {showDetail.youtubeUrl && getYoutubeEmbedUrl(showDetail.youtubeUrl) && (
+                  <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px', background: 'rgba(0,0,0,0.3)' }}>
+                    <iframe width="100%" height="100%" src={getYoutubeEmbedUrl(showDetail.youtubeUrl)}
+                      title="Preview" frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--primary)' }}>
+                      Rp {showDetail.price.toLocaleString('id-ID')}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', padding: '4px 10px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px' }}>
+                      Produk Digital
+                    </div>
+                  </div>
+                  {showDetail.description && (
+                    <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.75)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
+                      {showDetail.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* CTA Button */}
+                <button
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '14px', fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  onClick={() => { setShowDetail(null); setShowPayment(showDetail); setCheckoutStep('info'); }}
+                >
+                  Beli Sekarang <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ===== LIGHTBOX ===== */}
+      <AnimatePresence>
+        {lightboxOpen && showDetail && (() => {
+          const imgs = [showDetail.image, ...(showDetail.images || [])].filter(Boolean);
+          return (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}
+              onClick={() => setLightboxOpen(false)}
+            >
+              <button onClick={() => setLightboxOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={22} />
+              </button>
+              <motion.img
+                key={detailImgIdx}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                src={imgs[detailImgIdx]} alt="zoom"
+                style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '12px', objectFit: 'contain' }}
+                onClick={e => e.stopPropagation()}
+              />
+              {imgs.length > 1 && (
+                <div style={{ display: 'flex', gap: '12px' }} onClick={e => e.stopPropagation()}>
+                  {imgs.map((img, i) => (
+                    <div key={i} onClick={() => setDetailImgIdx(i)}
+                      style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', border: detailImgIdx === i ? '2px solid var(--primary)' : '2px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}
+                    >
+                      <img src={img} alt={`lb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ===== CHECKOUT / PAYMENT MODAL ===== */}
       <AnimatePresence>
         {showPayment && (
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -178,7 +364,32 @@ function HomePage() {
               {!orderComplete ? (
                 <>
                   <h2 style={{ marginBottom: '8px', textAlign: 'center' }}>Detail Pesanan</h2>
-                  <p style={{ marginBottom: '24px', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>{showPayment.name}</p>
+                  <p style={{ marginBottom: '4px', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', fontWeight: 'bold' }}>{showPayment.name}</p>
+
+                  {/* YouTube Preview */}
+                  {showPayment.youtubeUrl && getYoutubeEmbedUrl(showPayment.youtubeUrl) && (
+                    <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px', background: 'rgba(0,0,0,0.2)' }}>
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={getYoutubeEmbedUrl(showPayment.youtubeUrl)}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  )}
+
+                  {/* Multiple Images Gallery */}
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px' }}>
+                    <img src={showPayment.image} alt={showPayment.name} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                    {showPayment.images?.map((img, i) => img && (
+                      <img key={i} src={img} alt={`${showPayment.name} ${i + 1}`} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                    ))}
+                  </div>
+
+                  <p style={{ marginBottom: '24px', color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', fontStyle: 'italic' }}>{showPayment.description}</p>
 
                   {checkoutStep === 'info' ? (
                     <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -257,7 +468,7 @@ function HomePage() {
       <style>{`
         .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; }
       `}</style>
-    </div>
+    </div >
   );
 }
 
@@ -266,17 +477,22 @@ function AdminWrapper() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE = window.location.pathname.startsWith('/katalog/dist')
-    ? '/katalog/dist/api/manage.php'
-    : '/api/manage.php';
+  const getAppRoot = () => {
+    let path = window.location.pathname;
+    const root = path.split('/admin')[0].split('/index.html')[0].replace(/\/$/, '');
+    return root || '';
+  };
+  const APP_ROOT = getAppRoot();
+  const API_BASE = APP_ROOT + '/api/manage.php';
 
   useEffect(() => {
     if (isLoggedIn) {
       fetch(`${API_BASE}?action=get_data`)
         .then(res => res.json())
-        .then(data => setUserData(data));
+        .then(data => setUserData(data))
+        .catch(err => console.error("Admin fetch error:", err));
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, API_BASE]);
 
   const handleLoginSuccess = (token) => {
     localStorage.setItem('admin_token', token);
@@ -297,10 +513,12 @@ function AdminWrapper() {
 }
 
 function App() {
-  // Detect basename dynamically: /katalog/dist/ for local, / for production
-  const basename = window.location.pathname.startsWith('/katalog/dist')
-    ? '/katalog/dist'
-    : '/';
+  const getAppRoot = () => {
+    let path = window.location.pathname;
+    const root = path.split('/admin')[0].split('/index.html')[0].replace(/\/$/, '');
+    return root || '';
+  };
+  const basename = getAppRoot();
 
   return (
     <BrowserRouter basename={basename}>

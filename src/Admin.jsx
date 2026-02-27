@@ -56,11 +56,25 @@ function Admin({ initialData, onLogout, onSave }) {
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch(`${API_BASE}?action=get_orders`);
-            const result = await response.json();
-            setOrders(result);
+            const response = await fetch(`${API_BASE}?action=get_orders`, {
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                console.error('Gagal fetch orders, status:', response.status);
+                setOrders([]);
+                return;
+            }
+            const text = await response.text();
+            try {
+                const result = JSON.parse(text);
+                setOrders(Array.isArray(result) ? result : []);
+            } catch (e) {
+                console.error('Response bukan JSON:', text.substring(0, 100));
+                setOrders([]);
+            }
         } catch (err) {
-            console.error("Gagal mengambil data pesanan");
+            console.error("Gagal mengambil data pesanan", err);
+            setOrders([]);
         }
     };
 
@@ -113,7 +127,16 @@ function Admin({ initialData, onLogout, onSave }) {
         const newId = data.products.length > 0 ? Math.max(...data.products.map(p => p.id)) + 1 : 1;
         setData({
             ...data,
-            products: [...data.products, { id: newId, name: 'Produk Baru', price: 0, image: '', driveUrl: '' }]
+            products: [...data.products, {
+                id: newId,
+                name: 'Produk Baru',
+                price: 0,
+                image: '',
+                images: [],
+                youtubeUrl: '',
+                driveUrl: '',
+                description: ''
+            }]
         });
     };
 
@@ -220,7 +243,7 @@ function Admin({ initialData, onLogout, onSave }) {
                                     {order.status === 'PENDING' ? (
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
-                                                <MessageCircle size={16} /> Verifikasi & Kirim ke WA
+                                                <MessageCircle size={16} /> Verifikasi & Kirim Notifikasi (WA & Email)
                                             </button>
                                             <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
                                                 Hubungi Saja
@@ -298,7 +321,48 @@ function Admin({ initialData, onLogout, onSave }) {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <input className="admin-input" placeholder="Google Drive Link (Dikirim via WA)" value={product.driveUrl} onChange={e => updateProduct(product.id, 'driveUrl', e.target.value)} />
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <input className="admin-input" placeholder="Google Drive Link (Dikirim via WA)" value={product.driveUrl} onChange={e => updateProduct(product.id, 'driveUrl', e.target.value)} />
+                                                <input className="admin-input" placeholder="YouTube Video URL" value={product.youtubeUrl || ''} onChange={e => updateProduct(product.id, 'youtubeUrl', e.target.value)} />
+                                            </div>
+
+                                            <div>
+                                                <label className="admin-label">Gambar Tambahan (Opsional)</label>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    {(product.images || []).map((img, idx) => (
+                                                        <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            {img && <img src={img} alt={`preview-${idx}`} style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />}
+                                                            <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                {img ? img.split('/').pop() : 'Belum ada gambar'}
+                                                            </span>
+                                                            <label className="btn-primary" style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', flexShrink: 0 }}>
+                                                                <Upload size={14} /> Ganti
+                                                                <input type="file" hidden accept="image/*" onChange={e => {
+                                                                    if (e.target.files[0]) handleUpload(e.target.files[0], (url) => {
+                                                                        const newImages = [...(product.images || [])];
+                                                                        newImages[idx] = url;
+                                                                        updateProduct(product.id, 'images', newImages);
+                                                                    });
+                                                                }} />
+                                                            </label>
+                                                            <button className="delete-btn" style={{ padding: '8px', flexShrink: 0 }} onClick={() => {
+                                                                const newImages = (product.images || []).filter((_, i) => i !== idx);
+                                                                updateProduct(product.id, 'images', newImages);
+                                                            }}><Trash2 size={14} /></button>
+                                                        </div>
+                                                    ))}
+                                                    <label className="btn-primary" style={{ padding: '8px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', width: 'fit-content', color: 'white' }}>
+                                                        <Plus size={14} /> Tambah Gambar
+                                                        <input type="file" hidden accept="image/*" onChange={e => {
+                                                            if (e.target.files[0]) handleUpload(e.target.files[0], (url) => {
+                                                                updateProduct(product.id, 'images', [...(product.images || []), url]);
+                                                            });
+                                                        }} />
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <textarea className="admin-input" placeholder="Deskripsi Produk" value={product.description} onChange={e => updateProduct(product.id, 'description', e.target.value)} rows={2} />
                                         </div>
                                         <button onClick={() => removeProduct(product.id)} className="delete-btn"><Trash2 size={20} /></button>
                                     </div>
@@ -310,23 +374,27 @@ function Admin({ initialData, onLogout, onSave }) {
 
                 {activeAdminTab === 'payment' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
-                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>Konfigurasi Pembayaran</h2>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'white' }}>Konfigurasi Pembayaran</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div>
-                                <label className="admin-label">Detail Rekening Bank (BCA 1234xxx a/n John)</label>
+                                <label className="admin-label" style={{ color: 'white' }}>Detail Rekening Bank</label>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Contoh: BCA 1234567890 a/n Nama</p>
                                 <input className="admin-input" value={data.paymentSettings.bank} onChange={e => updatePayment('bank', e.target.value)} />
                             </div>
                             <div>
-                                <label className="admin-label">QRIS Payment (Upload Gambar)</label>
-                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
+                                <label className="admin-label" style={{ color: 'white' }}>QRIS Payment</label>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Upload gambar QRIS Anda</p>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                     <div style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
                                         <img src={data.paymentSettings.qrisUrl} alt="QRIS Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120?text=QRIS'} />
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <input className="admin-input" value={data.paymentSettings.qrisUrl} placeholder="URL Gambar QRIS" onChange={e => updatePayment('qrisUrl', e.target.value)} />
-                                        <label className="btn-primary" style={{ padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', width: 'fit-content' }}>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            {data.paymentSettings.qrisUrl ? data.paymentSettings.qrisUrl.split('/').pop() : 'Belum ada gambar QRIS'}
+                                        </p>
+                                        <label className="btn-primary" style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', width: 'fit-content', color: 'white' }}>
                                             <Upload size={18} /> Upload QRIS Baru
-                                            <input type="file" hidden onChange={e => {
+                                            <input type="file" hidden accept="image/*" onChange={e => {
                                                 if (e.target.files[0]) handleUpload(e.target.files[0], (url) => updatePayment('qrisUrl', url));
                                             }} />
                                         </label>
@@ -334,7 +402,7 @@ function Admin({ initialData, onLogout, onSave }) {
                                 </div>
                             </div>
                             <div style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Menerima pembayaran melalui Transfer Bank dan QRIS (Manual).</p>
+                                <p style={{ fontSize: '0.8rem', color: 'white' }}>Menerima pembayaran melalui <strong>Transfer Bank</strong> dan <strong>QRIS</strong> (konfirmasi manual).</p>
                             </div>
                         </div>
                     </motion.div>
@@ -351,8 +419,9 @@ function Admin({ initialData, onLogout, onSave }) {
             <style>{`
                 .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; }
                 .admin-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-                .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-muted); }
+                .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: white; font-weight: 500; }
                 .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; }
+                .admin-input::placeholder { color: rgba(255,255,255,0.3); }
                 .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; }
             `}</style>
         </div>
