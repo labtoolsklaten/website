@@ -229,8 +229,8 @@ function Admin({ initialData, onLogout, onSave }) {
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h2 style={{ fontSize: '1.2rem' }}>Riwayat Pesanan</h2>
-                            <button className="glass-card" onClick={fetchOrders} style={{ padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <ClipboardList size={14} /> Refresh
+                            <button className="refresh-btn" onClick={fetchOrders}>
+                                <ClipboardList size={16} /> Refresh Data
                             </button>
                         </div>
 
@@ -536,9 +536,12 @@ function Admin({ initialData, onLogout, onSave }) {
                 .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; border-radius: 12px; }
                 .admin-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
                 .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: white; font-weight: 500; }
-                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; transition: all 0.2s; }
+                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; transition: all 0.2s; -webkit-appearance: none; }
                 .admin-input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 0 2px var(--primary-glow); }
                 .admin-input::placeholder { color: rgba(255,255,255,0.3); }
+                select.admin-input option { background: #1e293b; color: white; }
+                .refresh-btn { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; padding: 8px 16px; border-radius: 12px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+                .refresh-btn:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--primary); color: white; transform: translateY(-1px); }
                 .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
                 .delete-btn:hover { background: rgba(239, 68, 68, 0.2); transform: scale(1.05); }
                 .admin-tab-container::-webkit-scrollbar { display: none; }
