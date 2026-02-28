@@ -168,7 +168,7 @@ function Admin({ initialData, onLogout, onSave }) {
                 </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+            <div className="admin-tab-container" style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
                 <button onClick={() => setActiveAdminTab('profile')} className={`glass-card admin-tab ${activeAdminTab === 'profile' ? 'active' : ''}`}>
                     <User size={18} /> Profil
                 </button>
@@ -184,21 +184,24 @@ function Admin({ initialData, onLogout, onSave }) {
                 <button onClick={() => setActiveAdminTab('payment')} className={`glass-card admin-tab ${activeAdminTab === 'payment' ? 'active' : ''}`}>
                     <CreditCard size={18} /> Bayar
                 </button>
+                <button onClick={() => setActiveAdminTab('notifications')} className={`glass-card admin-tab ${activeAdminTab === 'notifications' ? 'active' : ''}`}>
+                    <Mail size={18} /> Notif
+                </button>
             </div>
 
             <div className="admin-content-area">
                 {activeAdminTab === 'profile' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
                         <h2 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>Pengaturan Profil</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div className="admin-stack-mobile">
                             <div>
                                 <label className="admin-label">Nama Lengkap</label>
                                 <input className="admin-input" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} />
                             </div>
                             <div>
                                 <label className="admin-label">Foto Profil</label>
-                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div className="admin-row responsive" style={{ gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
+                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
                                         <img src={data.avatar} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/80?text=Avatar'} />
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
@@ -241,21 +244,21 @@ function Admin({ initialData, onLogout, onSave }) {
                                         <div style={{ color: 'var(--text-muted)' }}>Metode: {order.method} | Rp {order.amount.toLocaleString()}</div>
                                     </div>
                                     {order.status === 'PENDING' ? (
-                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div className="admin-row responsive" style={{ gap: '8px' }}>
                                             <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
-                                                <MessageCircle size={16} /> Verifikasi & Kirim Notifikasi (WA & Email)
+                                                <MessageCircle size={16} /> Verifikasi & Kirim Notifikasi
                                             </button>
                                             <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
-                                                Hubungi Saja
+                                                Hubungi WA
                                             </button>
                                         </div>
                                     ) : (
-                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div className="admin-row responsive" style={{ gap: '8px' }}>
                                             <button className="glass-card" style={{ flex: 2, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
                                                 <MessageCircle size={16} /> Kirim Ulang via WA
                                             </button>
                                             <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
-                                                Hubungi Saja
+                                                Hubungi WA
                                             </button>
                                         </div>
                                     )}
@@ -276,15 +279,15 @@ function Admin({ initialData, onLogout, onSave }) {
                                 <Plus size={18} /> Tambah Link
                             </button>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="admin-stack-mobile">
                             {data.links?.map(link => (
                                 <div key={link.id} className="glass-card" style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <div className="admin-row responsive" style={{ gap: '12px' }}>
                                         <div style={{ flex: 1, display: 'flex', gap: '12px' }}>
-                                            <input className="admin-input" placeholder="Judul" value={link.title} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, title: e.target.value } : l) })} />
-                                            <input className="admin-input" placeholder="URL" value={link.url} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, url: e.target.value } : l) })} />
+                                            <input className="admin-input" style={{ flex: 1 }} placeholder="Judul" value={link.title} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, title: e.target.value } : l) })} />
+                                            <input className="admin-input" style={{ flex: 2 }} placeholder="URL" value={link.url} onChange={e => setData({ ...data, links: data.links.map(l => l.id === link.id ? { ...l, url: e.target.value } : l) })} />
                                         </div>
-                                        <button onClick={() => setData({ ...data, links: data.links.filter(l => l.id !== link.id) })} className="delete-btn"><Trash2 size={18} /></button>
+                                        <button onClick={() => setData({ ...data, links: data.links.filter(l => l.id !== link.id) })} className="delete-btn" style={{ width: '100%', maxWidth: 'fit-content' }}><Trash2 size={18} /></button>
                                     </div>
                                 </div>
                             ))}
@@ -300,16 +303,16 @@ function Admin({ initialData, onLogout, onSave }) {
                                 <Plus size={18} /> Tambah Produk
                             </button>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div className="admin-stack-mobile">
                             {data.products.map(product => (
                                 <div key={product.id} className="glass-card" style={{ padding: '20px' }}>
-                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                        <div style={{ width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                    <div className="admin-row responsive admin-product-card" style={{ gap: '20px', alignItems: 'flex-start' }}>
+                                        <div className="admin-product-image-preview" style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
                                             <img src={product.image} alt="Product Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/100?text=Produk'} />
                                         </div>
-                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
                                             <input className="admin-input" placeholder="Judul Produk" value={product.name} onChange={e => updateProduct(product.id, 'name', e.target.value)} />
-                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                            <div className="admin-grid-2 responsive">
                                                 <input className="admin-input" type="number" placeholder="Harga" value={product.price} onChange={e => updateProduct(product.id, 'price', parseInt(e.target.value) || 0)} />
                                                 <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
                                                     <input className="admin-input" placeholder="URL Gambar" value={product.image} onChange={e => updateProduct(product.id, 'image', e.target.value)} />
@@ -321,8 +324,8 @@ function Admin({ initialData, onLogout, onSave }) {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <input className="admin-input" placeholder="Google Drive Link (Dikirim via WA)" value={product.driveUrl} onChange={e => updateProduct(product.id, 'driveUrl', e.target.value)} />
+                                            <div className="admin-grid-2 responsive">
+                                                <input className="admin-input" placeholder="Google Drive Link" value={product.driveUrl} onChange={e => updateProduct(product.id, 'driveUrl', e.target.value)} />
                                                 <input className="admin-input" placeholder="YouTube Video URL" value={product.youtubeUrl || ''} onChange={e => updateProduct(product.id, 'youtubeUrl', e.target.value)} />
                                             </div>
 
@@ -330,13 +333,15 @@ function Admin({ initialData, onLogout, onSave }) {
                                                 <label className="admin-label">Gambar Tambahan (Opsional)</label>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                     {(product.images || []).map((img, idx) => (
-                                                        <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                        <div key={idx} className="admin-row" style={{ gap: '8px' }}>
                                                             {img && <img src={img} alt={`preview-${idx}`} style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />}
-                                                            <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                {img ? img.split('/').pop() : 'Belum ada gambar'}
-                                                            </span>
-                                                            <label className="btn-primary" style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', flexShrink: 0 }}>
-                                                                <Upload size={14} /> Ganti
+                                                            <input className="admin-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={img} onChange={e => {
+                                                                const newImages = [...(product.images || [])];
+                                                                newImages[idx] = e.target.value;
+                                                                updateProduct(product.id, 'images', newImages);
+                                                            }} />
+                                                            <label className="btn-primary" style={{ padding: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', flexShrink: 0 }}>
+                                                                <Upload size={14} />
                                                                 <input type="file" hidden accept="image/*" onChange={e => {
                                                                     if (e.target.files[0]) handleUpload(e.target.files[0], (url) => {
                                                                         const newImages = [...(product.images || [])];
@@ -345,13 +350,13 @@ function Admin({ initialData, onLogout, onSave }) {
                                                                     });
                                                                 }} />
                                                             </label>
-                                                            <button className="delete-btn" style={{ padding: '8px', flexShrink: 0 }} onClick={() => {
+                                                            <button className="delete-btn" style={{ padding: '10px', flexShrink: 0 }} onClick={() => {
                                                                 const newImages = (product.images || []).filter((_, i) => i !== idx);
                                                                 updateProduct(product.id, 'images', newImages);
                                                             }}><Trash2 size={14} /></button>
                                                         </div>
                                                     ))}
-                                                    <label className="btn-primary" style={{ padding: '8px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', width: 'fit-content', color: 'white' }}>
+                                                    <label className="btn-primary" style={{ padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', width: 'fit-content', color: 'white' }}>
                                                         <Plus size={14} /> Tambah Gambar
                                                         <input type="file" hidden accept="image/*" onChange={e => {
                                                             if (e.target.files[0]) handleUpload(e.target.files[0], (url) => {
@@ -364,7 +369,7 @@ function Admin({ initialData, onLogout, onSave }) {
 
                                             <textarea className="admin-input" placeholder="Deskripsi Produk" value={product.description} onChange={e => updateProduct(product.id, 'description', e.target.value)} rows={2} />
                                         </div>
-                                        <button onClick={() => removeProduct(product.id)} className="delete-btn"><Trash2 size={20} /></button>
+                                        <button onClick={() => removeProduct(product.id)} className="delete-btn" style={{ position: 'relative', alignSelf: 'flex-start' }}><Trash2 size={20} /></button>
                                     </div>
                                 </div>
                             ))}
@@ -375,7 +380,7 @@ function Admin({ initialData, onLogout, onSave }) {
                 {activeAdminTab === 'payment' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
                         <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'white' }}>Konfigurasi Pembayaran</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div className="admin-stack-mobile">
                             <div>
                                 <label className="admin-label" style={{ color: 'white' }}>Detail Rekening Bank</label>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Contoh: BCA 1234567890 a/n Nama</p>
@@ -384,7 +389,7 @@ function Admin({ initialData, onLogout, onSave }) {
                             <div>
                                 <label className="admin-label" style={{ color: 'white' }}>QRIS Payment</label>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Upload gambar QRIS Anda</p>
-                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                <div className="admin-row responsive" style={{ gap: '16px', alignItems: 'center' }}>
                                     <div style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
                                         <img src={data.paymentSettings.qrisUrl} alt="QRIS Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120?text=QRIS'} />
                                     </div>
@@ -407,22 +412,79 @@ function Admin({ initialData, onLogout, onSave }) {
                         </div>
                     </motion.div>
                 )}
+
+                {activeAdminTab === 'notifications' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'white' }}>Pengaturan Notifikasi</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                    <h3 style={{ fontSize: '1rem', color: 'white' }}>Konfigurasi Email (SMTP)</h3>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={data.notificationSettings?.emailEnabled} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailEnabled: e.target.checked } })} />
+                                        <span style={{ fontSize: '0.85rem', color: 'white' }}>Aktifkan Notif Email</span>
+                                    </label>
+                                </div>
+                                <div className="admin-grid-2 responsive">
+                                    <div>
+                                        <label className="admin-label">SMTP Host</label>
+                                        <input className="admin-input" placeholder="smtp.gmail.com" value={data.notificationSettings?.smtpHost || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), smtpHost: e.target.value } })} />
+                                    </div>
+                                    <div>
+                                        <label className="admin-label">SMTP Port</label>
+                                        <input className="admin-input" placeholder="587" value={data.notificationSettings?.smtpPort || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), smtpPort: e.target.value } })} />
+                                    </div>
+                                    <div>
+                                        <label className="admin-label">SMTP User</label>
+                                        <input className="admin-input" placeholder="email@gmail.com" value={data.notificationSettings?.smtpUser || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), smtpUser: e.target.value } })} />
+                                    </div>
+                                    <div>
+                                        <label className="admin-label">SMTP Password</label>
+                                        <input className="admin-input" type="password" placeholder="App Password" value={data.notificationSettings?.smtpPass || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), smtpPass: e.target.value } })} />
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '12px' }}>Tip: Gunakan "App Password" jika menggunakan Gmail.</p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <h3 style={{ fontSize: '1rem', color: 'white' }}>Template Notifikasi</h3>
+                                <div>
+                                    <label className="admin-label">Pesan WhatsApp</label>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Tag tersedia: {'{customer}'}, {'{product_name}'}, {'{drive_link}'}</p>
+                                    <textarea className="admin-input" rows={4} value={data.notificationSettings?.waTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), waTemplate: e.target.value } })} />
+                                </div>
+                                <div>
+                                    <label className="admin-label">Subject Email</label>
+                                    <input className="admin-input" value={data.notificationSettings?.emailSubject || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailSubject: e.target.value } })} />
+                                </div>
+                                <div>
+                                    <label className="admin-label">Isi Email</label>
+                                    <textarea className="admin-input" rows={6} value={data.notificationSettings?.emailTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailTemplate: e.target.value } })} />
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
             </div>
 
             <div style={{ height: '100px' }}></div>
-            <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '800px', padding: '0 20px' }}>
-                <button className="btn-primary" style={{ width: '100%', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }} onClick={handleSave} disabled={loading}>
+            <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '800px', padding: '0 20px', zIndex: 100 }}>
+                <button className="btn-primary" style={{ width: '100%', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }} onClick={handleSave} disabled={loading}>
                     <Save size={20} /> {loading ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
                 </button>
             </div>
 
             <style>{`
-                .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; }
+                .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; border-radius: 12px; }
                 .admin-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
                 .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: white; font-weight: 500; }
-                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; }
+                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; transition: all 0.2s; }
+                .admin-input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 0 2px var(--primary-glow); }
                 .admin-input::placeholder { color: rgba(255,255,255,0.3); }
-                .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; }
+                .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+                .delete-btn:hover { background: rgba(239, 68, 68, 0.2); transform: scale(1.05); }
+                .admin-tab-container::-webkit-scrollbar { display: none; }
             `}</style>
         </div>
     );

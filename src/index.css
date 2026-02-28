@@ -228,6 +228,54 @@ h3 {
   justify-content: center;
 }
 
+/* Resposive Utilities for Admin */
+.admin-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.admin-stack-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-row.responsive {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-grid-2.responsive {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-product-card {
+    flex-direction: column !important;
+  }
+
+  .admin-product-image-preview {
+    width: 100% !important;
+    height: 160px !important;
+  }
+
+  .admin-tab-container {
+    padding-bottom: 12px;
+  }
+
+  .admin-tab {
+    padding: 10px 16px !important;
+    font-size: 0.85rem;
+  }
+}
+
 .payment-method {
   display: flex;
   align-items: center;
@@ -239,9 +287,14 @@ h3 {
   border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: left;
   transition: all 0.2s;
+  border-radius: 12px;
 }
 
 .payment-method:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--primary);
+}
+
+.admin-input-group {
+    width: 100%;
 }

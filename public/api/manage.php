@@ -126,6 +126,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_data') {
 if ($action === 'get_orders') {
     $orders = loadJson($ordersFile);
     $data = loadJson($dataFile);
+    $notif = $data['notificationSettings'] ?? [];
+    $waTemplate = $notif['waTemplate'] ?? "Halo {customer}!\n\nPembayaran Anda untuk *{product_name}* telah kami terima. ✅\n\nSilakan akses produk Anda melalui link di bawah ini:\n{drive_link}\n\nTerima kasih telah berbelanja!";
+
     foreach ($orders as &$order) {
         $driveLink = "";
         foreach($data['products'] as $p) {
@@ -134,7 +137,13 @@ if ($action === 'get_orders') {
                 break;
             }
         }
-        $message = "Halo " . $order['customer'] . "!\n\nPembayaran Anda untuk *" . $order['product_name'] . "* telah kami terima. ✅\n\nSilakan akses produk Anda melalui link di bawah ini:\n" . $driveLink . "\n\nTerima kasih telah berbelanja!";
+        
+        $message = str_replace(
+            ['{customer}', '{product_name}', '{drive_link}'],
+            [$order['customer'], $order['product_name'], $driveLink],
+            $waTemplate
+        );
+
         $waNumber = preg_replace('/[^0-9]/', '', $order['whatsapp']);
         if (strpos($waNumber, '0') === 0) $waNumber = '62' . substr($waNumber, 1);
         $order['wa_link'] = "https://wa.me/" . $waNumber . "?text=" . urlencode($message);
@@ -146,14 +155,52 @@ if ($action === 'get_orders') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_order') {
     $req = getRequestData();
     $orders = loadJson($ordersFile);
+    $data = loadJson($dataFile);
+    $targetOrder = null;
+
     foreach ($orders as &$order) {
         if ($order['id'] === $req['order_id']) {
             $order['status'] = 'PAID';
+            $targetOrder = $order;
             break;
         }
     }
     saveJson($ordersFile, $orders);
+
+    // Send Email if enabled
+    $notif = $data['notificationSettings'] ?? [];
+    if ($targetOrder && ($notif['emailEnabled'] ?? false) && !empty($targetOrder['email'])) {
+        $driveLink = "";
+        foreach($data['products'] as $p) {
+            if ($p['id'] == $targetOrder['product_id']) {
+                $driveLink = $p['driveUrl'];
+                break;
+            }
+        }
+
+        $subject = str_replace(
+            ['{customer}', '{product_name}', '{drive_link}'],
+            [$targetOrder['customer'], $targetOrder['product_name'], $driveLink],
+            $notif['emailSubject'] ?? "Akses Produk: {product_name}"
+        );
+
+        $body = str_replace(
+            ['{customer}', '{product_name}', '{drive_link}', '{admin_name}'],
+            [$targetOrder['customer'], $targetOrder['product_name'], $driveLink, $data['name'] ?? 'Admin'],
+            $notif['emailTemplate'] ?? "Halo {customer}, berikut link produk Anda: {drive_link}"
+        );
+
+        $headers = "From: " . ($notif['smtpUser'] ?? "noreply@example.com") . "\r\n";
+        $headers .= "Reply-To: " . ($notif['smtpUser'] ?? "noreply@example.com") . "\r\n";
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+        // Note: Using mail() for simplicity. SMTP settings in Admin are saved but 
+        // would requires a library like PHPMailer to be fully functional here.
+        mail($targetOrder['email'], $subject, $body, $headers);
+    }
+
     echo json_encode(['status' => 'success']);
     exit;
 }
+
 ?>

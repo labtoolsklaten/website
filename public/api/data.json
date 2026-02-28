@@ -39,5 +39,15 @@
     "bank": "BCA - 1234567890 (Ahmad)",
     "qrisUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=SamplePayment",
     "xenditEnabled": true
+  },
+  "notificationSettings": {
+    "emailEnabled": false,
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": "587",
+    "smtpUser": "",
+    "smtpPass": "",
+    "waTemplate": "Halo {customer}!\n\nPembayaran Anda untuk *{product_name}* telah kami terima. ✅\n\nSilakan akses produk Anda melalui link di bawah ini:\n{drive_link}\n\nTerima kasih telah berbelanja!",
+    "emailSubject": "Akses Produk Digital: {product_name}",
+    "emailTemplate": "Halo {customer},\n\nTerima kasih atas pembelian Anda! Pembayaran Anda untuk {product_name} telah berhasil kami terima.\n\nAnda dapat mengakses produk Anda melalui link berikut:\n{drive_link}\n\nJika ada pertanyaan, silakan hubungi kami.\n\nSalam,\n{admin_name}"
   }
 }
