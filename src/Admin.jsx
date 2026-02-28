@@ -23,6 +23,8 @@ function Admin({ initialData, onLogout, onSave }) {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
     const [activeAdminTab, setActiveAdminTab] = useState('profile');
+    const [orderFilterStatus, setOrderFilterStatus] = useState('ALL');
+    const [orderFilterMonth, setOrderFilterMonth] = useState('');
 
     // Dynamic API Base URL
     const API_BASE = window.location.pathname.startsWith('/katalog/dist')
@@ -225,45 +227,85 @@ function Admin({ initialData, onLogout, onSave }) {
 
                 {activeAdminTab === 'orders' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                        <h2 style={{ marginBottom: '16px', fontSize: '1.2rem' }}>Riwayat Pesanan</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 style={{ fontSize: '1.2rem' }}>Riwayat Pesanan</h2>
+                            <button className="glass-card" onClick={fetchOrders} style={{ padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <ClipboardList size={14} /> Refresh
+                            </button>
+                        </div>
+
+                        {/* Filters */}
+                        <div className="glass-card" style={{ padding: '16px', marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label className="admin-label" style={{ fontSize: '0.75rem' }}>Status</label>
+                                <select className="admin-input" style={{ padding: '8px' }} value={orderFilterStatus} onChange={e => setOrderFilterStatus(e.target.value)}>
+                                    <option value="ALL">Semua Status</option>
+                                    <option value="PENDING">Belum Bayar (Baru)</option>
+                                    <option value="PAID">Sudah Lunas</option>
+                                </select>
+                            </div>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label className="admin-label" style={{ fontSize: '0.75rem' }}>Periode Bulan</label>
+                                <input type="month" className="admin-input" style={{ padding: '8px' }} value={orderFilterMonth} onChange={e => setOrderFilterMonth(e.target.value)} />
+                            </div>
+                            <button className="glass-card" style={{ alignSelf: 'flex-end', padding: '8px 12px', color: 'var(--text-muted)' }} onClick={() => { setOrderFilterStatus('ALL'); setOrderFilterMonth(''); }}>
+                                Reset
+                            </button>
+                        </div>
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {orders.length === 0 && <p className="glass-card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada pesanan.</p>}
-                            {orders.map(order => (
-                                <div key={order.id} className="glass-card" style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{order.id}</span>
-                                        <span style={{
-                                            fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px',
-                                            background: order.status === 'PAID' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
-                                            color: order.status === 'PAID' ? '#22c55e' : '#eab308'
-                                        }}>{order.status}</span>
-                                    </div>
-                                    <div style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
-                                        <div style={{ fontWeight: '600' }}>{order.customer} ({order.whatsapp})</div>
-                                        <div style={{ color: 'var(--text-muted)' }}>Produk: {order.product_name}</div>
-                                        <div style={{ color: 'var(--text-muted)' }}>Metode: {order.method} | Rp {order.amount.toLocaleString()}</div>
-                                    </div>
-                                    {order.status === 'PENDING' ? (
-                                        <div className="admin-row responsive" style={{ gap: '8px' }}>
-                                            <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
-                                                <MessageCircle size={16} /> Verifikasi & Kirim Notifikasi
-                                            </button>
-                                            <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
-                                                Hubungi WA
-                                            </button>
+                            {(() => {
+                                const filtered = orders.filter(order => {
+                                    const matchStatus = orderFilterStatus === 'ALL' || order.status === orderFilterStatus;
+                                    const matchMonth = !orderFilterMonth || (order.created_at && order.created_at.startsWith(orderFilterMonth));
+                                    return matchStatus && matchMonth;
+                                });
+
+                                if (filtered.length === 0) return <p className="glass-card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Tidak ada pesanan yang sesuai filter.</p>;
+
+                                return filtered.map(order => (
+                                    <div key={order.id} className="glass-card" style={{ padding: '16px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1rem' }}>{order.id}</span>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{order.created_at}</span>
+                                            </div>
+                                            <span style={{
+                                                fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', height: 'fit-content',
+                                                background: order.status === 'PAID' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                                                color: order.status === 'PAID' ? '#22c55e' : '#eab308'
+                                            }}>{order.status === 'PAID' ? 'Lunas' : 'Menunggu'}</span>
                                         </div>
-                                    ) : (
-                                        <div className="admin-row responsive" style={{ gap: '8px' }}>
-                                            <button className="glass-card" style={{ flex: 2, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
-                                                <MessageCircle size={16} /> Kirim Ulang via WA
-                                            </button>
-                                            <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
-                                                Hubungi WA
-                                            </button>
+                                        <div style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
+                                            <div style={{ fontWeight: '600', color: 'white' }}>{order.customer}</div>
+                                            <div style={{ color: 'var(--text-muted)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <MessageCircle size={14} /> {order.whatsapp}
+                                            </div>
+                                            <div style={{ color: 'var(--text-muted)' }}>Produk: {order.product_name}</div>
+                                            <div style={{ color: 'white', fontWeight: '500' }}>{order.method} | Rp {order.amount.toLocaleString()}</div>
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        {order.status === 'PENDING' ? (
+                                            <div className="admin-row responsive" style={{ gap: '8px' }}>
+                                                <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
+                                                    <CheckCircle size={16} /> Verifikasi (Lunas)
+                                                </button>
+                                                <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
+                                                    Hubungi WA
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="admin-row responsive" style={{ gap: '8px' }}>
+                                                <button className="glass-card" style={{ flex: 2, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
+                                                    <MessageCircle size={16} /> Pesan Selesai (WA)
+                                                </button>
+                                                <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
+                                                    Hubungi WA
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     </motion.div>
                 )}
@@ -447,19 +489,34 @@ function Admin({ initialData, onLogout, onSave }) {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <h3 style={{ fontSize: '1rem', color: 'white' }}>Template Notifikasi</h3>
-                                <div>
-                                    <label className="admin-label">Pesan WhatsApp</label>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Tag tersedia: {'{customer}'}, {'{product_name}'}, {'{drive_link}'}</p>
-                                    <textarea className="admin-input" rows={4} value={data.notificationSettings?.waTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), waTemplate: e.target.value } })} />
+                                <h3 style={{ fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <MessageCircle size={18} /> Template Notifikasi
+                                </h3>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <p style={{ fontSize: '0.8rem', color: 'white', marginBottom: '8px', fontWeight: 'bold' }}>ℹ️ Informasi Tag Otomatis:</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                                        <code style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{"{customer}"}</code>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>: Nama Pembeli</span>
+                                        <code style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{"{product_name}"}</code>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>: Nama Produk</span>
+                                        <code style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{"{drive_link}"}</code>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>: Link Produk/Akses</span>
+                                        <code style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{"{admin_name}"}</code>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>: Nama Anda (Admin)</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '8px', fontStyle: 'italic' }}>*Pastikan menulis tag persis seperti di atas (termasuk kurung kurawal).</p>
                                 </div>
                                 <div>
-                                    <label className="admin-label">Subject Email</label>
-                                    <input className="admin-input" value={data.notificationSettings?.emailSubject || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailSubject: e.target.value } })} />
+                                    <label className="admin-label">Pesan WhatsApp (Setelah Verifikasi)</label>
+                                    <textarea className="admin-input" rows={4} placeholder="Halo {customer}, terima kasih telah membeli {product_name}..." value={data.notificationSettings?.waTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), waTemplate: e.target.value } })} />
                                 </div>
                                 <div>
-                                    <label className="admin-label">Isi Email</label>
-                                    <textarea className="admin-input" rows={6} value={data.notificationSettings?.emailTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailTemplate: e.target.value } })} />
+                                    <label className="admin-label">Subject Email Notifikasi</label>
+                                    <input className="admin-input" placeholder="Akses Produk: {product_name}" value={data.notificationSettings?.emailSubject || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailSubject: e.target.value } })} />
+                                </div>
+                                <div>
+                                    <label className="admin-label">Isi Email Notifikasi</label>
+                                    <textarea className="admin-input" rows={6} placeholder="Halo {customer}, berikut link akses untuk {product_name}: {drive_link}" value={data.notificationSettings?.emailTemplate || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailTemplate: e.target.value } })} />
                                 </div>
                             </div>
                         </div>
