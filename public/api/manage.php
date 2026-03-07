@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
         'id' => 'ORD-' . strtoupper(substr(uniqid(), 8, 4)),
         'customer' => $req['customer'] ?? 'Anonymous',
         'whatsapp' => $req['whatsapp'] ?? '',
+        'email' => $req['email'] ?? '',
         'product_id' => $req['product_id'],
         'product_name' => $req['product_name'],
         'amount' => $req['amount'],
@@ -73,6 +74,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
     
     $orders[] = $newOrder;
     saveJson($ordersFile, $orders);
+
+    // Kirim notifikasi email ke Admin (jika diaktifkan dan email tujuan ada)
+    $data = loadJson($dataFile);
+    $notif = $data['notificationSettings'] ?? [];
+    if (($notif['emailEnabled'] ?? false) && !empty($notif['adminEmail'])) {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = $notif['smtpHost'] ?? '';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $notif['smtpUser'] ?? '';
+            $mail->Password   = $notif['smtpPass'] ?? '';
+            $mail->Port       = $notif['smtpPort'] ?? 587;
+            
+            if ($mail->Port == 587 || $mail->Port == 25) {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            } else {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            }
+
+            $mail->setFrom($notif['smtpUser'] ?? "noreply@example.com", 'Sistem Katalog Web');
+            $mail->addAddress($notif['adminEmail'], $data['name'] ?? 'Admin');
+
+            $mail->isHTML(true);
+            $mail->Subject = "Pesanan Baru Masuk: {$newOrder['product_name']} ({$newOrder['customer']})";
+            $rawBody = "Halo Admin,\n\nAda pesanan baru yang masuk ke sistem. Berikut rinciannya:\n\n"
+                           . "ID Pesanan: {$newOrder['id']}\n"
+                           . "Nama Pembeli: {$newOrder['customer']}\n"
+                           . "WhatsApp: {$newOrder['whatsapp']}\n"
+                           . "Email: {$newOrder['email']}\n"
+                           . "Produk: {$newOrder['product_name']}\n"
+                           . "Nominal Bayar: Rp " . number_format($newOrder['amount'], 0, ',', '.') . "\n"
+                           . "Metode: " . strtoupper($newOrder['method']) . "\n"
+                           . "Waktu: {$newOrder['created_at']}\n\n"
+                           . "Silakan cek panel admin Anda untuk melakukan verifikasi pembayaran.\n\n"
+                           . "Terima kasih.";
+            $mail->Body = nl2br($rawBody);
+            $mail->AltBody = $rawBody;
+
+            $mail->send();
+        } catch (Exception $e) {
+            error_log("Gagal kirim notifikasi Order ke Admin: {$mail->ErrorInfo}");
+        }
+    }
+
     echo json_encode(['status' => 'success', 'order' => $newOrder]);
     exit;
 }
@@ -187,58 +233,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_order') {
     }
     saveJson($ordersFile, $orders);
 
-    // Send Email if enabled
-    $notif = $data['notificationSettings'] ?? [];
-    if ($targetOrder && ($notif['emailEnabled'] ?? false) && !empty($targetOrder['email'])) {
-        $driveLink = "";
-        foreach($data['products'] as $p) {
-            if ($p['id'] == $targetOrder['product_id']) {
-                $driveLink = $p['driveUrl'];
-                break;
-            }
-        }
+    echo json_encode(['status' => 'success']);
+    exit;
+}
 
-        $subject = str_replace(
-            ['{customer}', '{product_name}', '{drive_link}'],
-            [$targetOrder['customer'], $targetOrder['product_name'], $driveLink],
-            $notif['emailSubject'] ?? "Akses Produk: {product_name}"
-        );
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
+    $req = getRequestData();
+    $orders = loadJson($ordersFile);
+    $data = loadJson($dataFile);
+    $targetOrder = null;
 
-        $body = str_replace(
-            ['{customer}', '{product_name}', '{drive_link}', '{admin_name}'],
-            [$targetOrder['customer'], $targetOrder['product_name'], $driveLink, $data['name'] ?? 'Admin'],
-            $notif['emailTemplate'] ?? "Halo {customer}, berikut link produk Anda: {drive_link}"
-        );
-
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host       = $notif['smtpHost'] ?? '';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $notif['smtpUser'] ?? '';
-            $mail->Password   = $notif['smtpPass'] ?? '';
-            $mail->Port       = $notif['smtpPort'] ?? 465;
-            
-            if ($mail->Port == 587) {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            }
-
-            $mail->setFrom($notif['smtpUser'] ?? "noreply@example.com", $data['name'] ?? 'Admin');
-            $mail->addAddress($targetOrder['email'], $targetOrder['customer']);
-
-            $mail->isHTML(false);
-            $mail->Subject = $subject;
-            $mail->Body    = $body;
-
-            $mail->send();
-        } catch (Exception $e) {
-            error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+    foreach ($orders as $order) {
+        if ($order['id'] === $req['order_id']) {
+            $targetOrder = $order;
+            break;
         }
     }
 
-    echo json_encode(['status' => 'success']);
+    if (!$targetOrder || empty($targetOrder['email'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Pesanan tidak ditemukan atau tidak memiliki alamat email']);
+        exit;
+    }
+
+    $notif = $data['notificationSettings'] ?? [];
+    if (!($notif['emailEnabled'] ?? false)) {
+        echo json_encode(['status' => 'error', 'message' => 'Fitur notifikasi email belum diaktifkan di panel admin']);
+        exit;
+    }
+
+    $driveLink = "";
+    foreach($data['products'] as $p) {
+        if ($p['id'] == $targetOrder['product_id']) {
+            $driveLink = $p['driveUrl'];
+            break;
+        }
+    }
+
+    $subject = str_replace(
+        ['{customer}', '{product_name}', '{drive_link}'],
+        [$targetOrder['customer'], $targetOrder['product_name'], $driveLink],
+        $notif['emailSubject'] ?? "Akses Produk: {product_name}"
+    );
+
+    $body = str_replace(
+        ['{customer}', '{product_name}', '{drive_link}', '{admin_name}'],
+        [$targetOrder['customer'], $targetOrder['product_name'], $driveLink, $data['name'] ?? 'Admin'],
+        $notif['emailTemplate'] ?? "Halo {customer}, berikut link produk Anda: {drive_link}"
+    );
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = $notif['smtpHost'] ?? '';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $notif['smtpUser'] ?? '';
+        $mail->Password   = $notif['smtpPass'] ?? '';
+        $mail->Port       = $notif['smtpPort'] ?? 587;
+        
+        if ($mail->Port == 587 || $mail->Port == 25) {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        }
+
+        // Wajib menggunakan SMTP User sebagai From Email untuk menghindari rejection DMARC/Spam filter Google
+        $fromEmail = !empty($notif['smtpUser']) ? $notif['smtpUser'] : 'noreply@example.com';
+        $mail->setFrom($fromEmail, $data['name'] ?? 'Admin Website');
+        $mail->addReplyTo($fromEmail, $data['name'] ?? 'Admin Website');
+        $mail->addAddress($targetOrder['email'], $targetOrder['customer']);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        
+        $htmlBody = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <title>{$subject}</title>
+        </head>
+        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+            " . nl2br($body) . "
+        </body>
+        </html>
+        ";
+        
+        $mail->Body    = $htmlBody;
+        $mail->AltBody = $body;
+
+        $mail->send();
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+        echo json_encode(['status' => 'error', 'message' => $mail->ErrorInfo]);
+    }
+    
     exit;
 }
 

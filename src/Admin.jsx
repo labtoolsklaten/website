@@ -137,6 +137,25 @@ function Admin({ initialData, onLogout, onSave }) {
         }
     };
 
+    const sendEmailOrder = async (orderId) => {
+        if (!confirm('Kirim email akses produk ke pembeli sekarang?')) return;
+        try {
+            const response = await fetch(`${API_BASE}?action=send_email_order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('Email berhasil dikirim!');
+            } else {
+                alert('Gagal mengirim email: ' + (result.message || 'Error tidak diketahui'));
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan saat mengirim email');
+        }
+    };
+
     const updateProduct = (id, field, value) => {
         setData({
             ...data,
@@ -317,11 +336,11 @@ function Admin({ initialData, onLogout, onSave }) {
                                             </div>
                                         ) : (
                                             <div className="admin-row responsive" style={{ gap: '8px' }}>
-                                                <button className="glass-card" style={{ flex: 2, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
-                                                    <MessageCircle size={16} /> Pesan Selesai (WA)
+                                                <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#25d366', borderColor: 'rgba(37, 211, 102, 0.3)' }} onClick={() => window.open(order.wa_link, '_blank')}>
+                                                    <MessageCircle size={16} /> WA Lunas
                                                 </button>
-                                                <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
-                                                    Hubungi WA
+                                                <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#eab308', borderColor: 'rgba(234, 179, 8, 0.3)' }} onClick={() => sendEmailOrder(order.id)}>
+                                                    <Mail size={16} /> Kirim Email
                                                 </button>
                                                 <button className="delete-btn" style={{ flex: 'none', padding: '10px' }} onClick={() => deleteOrder(order.id)}>
                                                     <Trash2 size={16} />
@@ -491,6 +510,11 @@ function Admin({ initialData, onLogout, onSave }) {
                                         <input type="checkbox" checked={data.notificationSettings?.emailEnabled} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailEnabled: e.target.checked } })} />
                                         <span style={{ fontSize: '0.85rem', color: 'white' }}>Aktifkan Notif Email</span>
                                     </label>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label className="admin-label">Email Penerima Notifikasi (Admin)</label>
+                                    <input className="admin-input" placeholder="email.admin@gmail.com" value={data.notificationSettings?.adminEmail || ''} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), adminEmail: e.target.value } })} />
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Email ini akan menerima notifikasi otomatis ketika ada pesanan baru.</p>
                                 </div>
                                 <div className="admin-grid-2 responsive">
                                     <div>

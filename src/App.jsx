@@ -43,6 +43,7 @@ function HomePage() {
   const [storeView, setStoreView] = useState('grid');
   const [userData, setUserData] = useState(null);
   const [orderComplete, setOrderComplete] = useState(null);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const location = useLocation();
 
   // Ultra-robust detection for current app root
@@ -88,6 +89,9 @@ function HomePage() {
       return;
     }
 
+    if (isCreatingOrder) return;
+    setIsCreatingOrder(true);
+
     try {
       const response = await fetch(`${API_BASE}?action=create_order`, {
         method: 'POST',
@@ -113,6 +117,8 @@ function HomePage() {
       }
     } catch (err) {
       alert("Gagal memproses pesanan");
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
@@ -411,23 +417,48 @@ function HomePage() {
                     </motion.div>
                   ) : (
                     <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <button className="glass-card payment-method" onClick={() => handleCreateOrder(showPayment, 'manual')}>
-                        <Building size={24} color="#6366f1" /><div><div style={{ fontWeight: '600' }}>Transfer Bank</div><div style={{ fontSize: '0.8rem' }}>Konfirmasi Manual</div></div>
+                      <button 
+                        className="glass-card payment-method" 
+                        onClick={() => handleCreateOrder(showPayment, 'manual')}
+                        disabled={isCreatingOrder}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer' }}
+                      >
+                        <Building size={24} color="#6366f1" />
+                        <div>
+                          <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'Transfer Bank'}</div>
+                          <div style={{ fontSize: '0.8rem' }}>Konfirmasi Manual</div>
+                        </div>
                       </button>
-                      <button className="glass-card payment-method" onClick={() => handleCreateOrder(showPayment, 'qris')}>
-                        <QrCode size={24} color="#a855f7" /><div><div style={{ fontWeight: '600' }}>QRIS</div><div style={{ fontSize: '0.8rem' }}>Scan QR Code</div></div>
+                      <button 
+                        className="glass-card payment-method" 
+                        onClick={() => handleCreateOrder(showPayment, 'qris')}
+                        disabled={isCreatingOrder}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer' }}
+                      >
+                        <QrCode size={24} color="#a855f7" />
+                        <div>
+                          <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'QRIS'}</div>
+                          <div style={{ fontSize: '0.8rem' }}>Scan QR Code</div>
+                        </div>
                       </button>
-                      <button onClick={() => setCheckoutStep('info')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', marginTop: '8px' }}>← Edit Informasi</button>
+                      <button disabled={isCreatingOrder} onClick={() => setCheckoutStep('info')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: isCreatingOrder ? 'not-allowed' : 'pointer', marginTop: '8px', opacity: isCreatingOrder ? 0.5 : 1 }}>← Edit Informasi</button>
                     </motion.div>
                   )}
                 </>
               ) : (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center' }}>
                   <CheckCircle size={56} color="#22c55e" style={{ margin: '0 auto 16px' }} />
-                  <h2 style={{ marginBottom: '4px' }}>Pesanan Terkirim!</h2>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '20px' }}>ID: {orderComplete.id}</p>
+                  <h2 style={{ marginBottom: '12px' }}>Pesanan Terkirim!</h2>
+                  
+                  <div style={{ marginBottom: '20px', padding: '12px 20px', background: 'rgba(255,255,255,0.08)', borderRadius: '12px', display: 'inline-block', border: '1px solid rgba(255,255,255,0.15)' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>Kode Pesanan</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                      <span style={{ fontWeight: '800', color: 'white', fontSize: '1.3rem', letterSpacing: '1.5px' }}>{orderComplete.id}</span>
+                      <CopyButton text={orderComplete.id} label="" />
+                    </div>
+                  </div>
 
-                  <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', textAlign: 'left', marginBottom: '20px', border: '1px solid var(--primary)' }}>
+                  <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', textAlign: 'left', marginBottom: '16px', border: '1px solid var(--primary)' }}>
                     {orderComplete.method === 'qris' ? (
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Silakan Scan QRIS di bawah:</div>
@@ -455,8 +486,14 @@ function HomePage() {
                     )}
                   </div>
 
+                  <div style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', borderRadius: '8px', padding: '12px', marginBottom: '24px', textAlign: 'left' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#facc15', margin: 0, lineHeight: '1.5' }}>
+                      ⚠️ <strong>PENTING:</strong> Wajib cantumkan kode pesanan <strong>{orderComplete.id}</strong> pada berita transfer bank agar pembayaran Anda lebih cepat ditemukan dan diverifikasi oleh admin.
+                    </p>
+                  </div>
+
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.4' }}>
-                    Konfirmasi pembayaran akan kami kirim ke <strong>{orderComplete.whatsapp}</strong>
+                    Informasi selengkapnya akan kami kirim ke <strong>{orderComplete.whatsapp}</strong>
                   </p>
                   <button className="btn-primary" style={{ width: '100%' }} onClick={() => { setShowPayment(null); setOrderComplete(null); }}>Tutup</button>
                 </motion.div>
