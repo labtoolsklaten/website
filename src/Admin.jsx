@@ -118,6 +118,25 @@ function Admin({ initialData, onLogout, onSave }) {
         }
     };
 
+    const deleteOrder = async (orderId) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus pesanan ini secara permanen?')) return;
+        try {
+            const response = await fetch(`${API_BASE}?action=delete_order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                fetchOrders();
+            } else {
+                alert('Gagal menghapus pesanan');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan saat menghapus pesanan');
+        }
+    };
+
     const updateProduct = (id, field, value) => {
         setData({
             ...data,
@@ -292,6 +311,9 @@ function Admin({ initialData, onLogout, onSave }) {
                                                 <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
                                                     Hubungi WA
                                                 </button>
+                                                <button className="delete-btn" style={{ flex: 'none', padding: '10px' }} onClick={() => deleteOrder(order.id)}>
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         ) : (
                                             <div className="admin-row responsive" style={{ gap: '8px' }}>
@@ -300,6 +322,9 @@ function Admin({ initialData, onLogout, onSave }) {
                                                 </button>
                                                 <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
                                                     Hubungi WA
+                                                </button>
+                                                <button className="delete-btn" style={{ flex: 'none', padding: '10px' }} onClick={() => deleteOrder(order.id)}>
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         )}

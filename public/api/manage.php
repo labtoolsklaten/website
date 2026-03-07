@@ -156,6 +156,22 @@ if ($action === 'get_orders') {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_order') {
+    $req = getRequestData();
+    $orders = loadJson($ordersFile);
+    $newOrders = [];
+    
+    foreach ($orders as $order) {
+        if ($order['id'] !== $req['order_id']) {
+            $newOrders[] = $order;
+        }
+    }
+    
+    saveJson($ordersFile, $newOrders);
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_order') {
     $req = getRequestData();
     $orders = loadJson($ordersFile);
