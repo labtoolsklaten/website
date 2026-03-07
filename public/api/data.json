@@ -44,8 +44,8 @@
     "emailEnabled": false,
     "smtpHost": "smtp.gmail.com",
     "smtpPort": "587",
-    "smtpUser": "",
-    "smtpPass": "",
+    "smtpUser": "yanuar.andre28@gmail.com",
+    "smtpPass": "oecy ltqx zsmf jifv",
     "waTemplate": "Halo {customer}!\n\nPembayaran Anda untuk *{product_name}* telah kami terima. ✅\n\nSilakan akses produk Anda melalui link di bawah ini:\n{drive_link}\n\nTerima kasih telah berbelanja!",
     "emailSubject": "Akses Produk Digital: {product_name}",
     "emailTemplate": "Halo {customer},\n\nTerima kasih atas pembelian Anda! Pembayaran Anda untuk {product_name} telah berhasil kami terima.\n\nAnda dapat mengakses produk Anda melalui link berikut:\n{drive_link}\n\nJika ada pertanyaan, silakan hubungi kami.\n\nSalam,\n{admin_name}"

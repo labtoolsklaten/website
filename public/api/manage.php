@@ -6,6 +6,10 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 session_start();
 
+require __DIR__ . '/vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 $dataFile = 'data.json';
 $ordersFile = 'orders.json';
 $uploadDir = 'uploads/'; // Relative to this script (public/api/uploads/)
@@ -190,13 +194,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_order') {
             $notif['emailTemplate'] ?? "Halo {customer}, berikut link produk Anda: {drive_link}"
         );
 
-        $headers = "From: " . ($notif['smtpUser'] ?? "noreply@example.com") . "\r\n";
-        $headers .= "Reply-To: " . ($notif['smtpUser'] ?? "noreply@example.com") . "\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = $notif['smtpHost'] ?? '';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $notif['smtpUser'] ?? '';
+            $mail->Password   = $notif['smtpPass'] ?? '';
+            $mail->Port       = $notif['smtpPort'] ?? 465;
+            
+            if ($mail->Port == 587) {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            } else {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            }
 
-        // Note: Using mail() for simplicity. SMTP settings in Admin are saved but 
-        // would requires a library like PHPMailer to be fully functional here.
-        mail($targetOrder['email'], $subject, $body, $headers);
+            $mail->setFrom($notif['smtpUser'] ?? "noreply@example.com", $data['name'] ?? 'Admin');
+            $mail->addAddress($targetOrder['email'], $targetOrder['customer']);
+
+            $mail->isHTML(false);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+
+            $mail->send();
+        } catch (Exception $e) {
+            error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+        }
     }
 
     echo json_encode(['status' => 'success']);
