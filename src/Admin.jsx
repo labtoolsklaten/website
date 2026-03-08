@@ -100,8 +100,8 @@ function Admin({ initialData, onLogout, onSave }) {
         }
     };
 
-    const approveOrder = async (orderId, waLink) => {
-        if (!confirm('Tandai sudah lunas dan buka WhatsApp untuk kirim link produk?')) return;
+    const approveOrder = async (orderId) => {
+        if (!confirm('Tandai pesanan ini sudah lunas?')) return;
         try {
             const response = await fetch(`${API_BASE}?action=approve_order`, {
                 method: 'POST',
@@ -110,7 +110,6 @@ function Admin({ initialData, onLogout, onSave }) {
             });
             const result = await response.json();
             if (result.status === 'success') {
-                window.open(waLink, '_blank');
                 fetchOrders();
             }
         } catch (err) {
@@ -324,7 +323,7 @@ function Admin({ initialData, onLogout, onSave }) {
                                         </div>
                                         {order.status === 'PENDING' ? (
                                             <div className="admin-row responsive" style={{ gap: '8px' }}>
-                                                <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id, order.wa_link)}>
+                                                <button className="btn-primary" style={{ flex: 2, padding: '10px', background: 'linear-gradient(135deg, #25d366, #128c7e)' }} onClick={() => approveOrder(order.id)}>
                                                     <CheckCircle size={16} /> Verifikasi (Lunas)
                                                 </button>
                                                 <button className="glass-card" style={{ flex: 1, padding: '10px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={() => window.open(`https://wa.me/${order.whatsapp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`, '_blank')}>
@@ -492,8 +491,13 @@ function Admin({ initialData, onLogout, onSave }) {
                                     </div>
                                 </div>
                             </div>
+                            <div>
+                                <label className="admin-label" style={{ color: 'white' }}>PayPal URL / Username</label>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Contoh: https://paypal.me/username</p>
+                                <input className="admin-input" value={data.paymentSettings.paypalUrl || ''} onChange={e => updatePayment('paypalUrl', e.target.value)} />
+                            </div>
                             <div style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                <p style={{ fontSize: '0.8rem', color: 'white' }}>Menerima pembayaran melalui <strong>Transfer Bank</strong> dan <strong>QRIS</strong> (konfirmasi manual).</p>
+                                <p style={{ fontSize: '0.8rem', color: 'white' }}>Menerima pembayaran melalui <strong>Transfer Bank</strong>, <strong>QRIS</strong>, dan <strong>PayPal</strong>. Opsi yang tidak diisi akan otomatis disembunyikan jika kosong, namun Setidaknya Bank atau QRIS harus diisi.</p>
                             </div>
                         </div>
                     </motion.div>

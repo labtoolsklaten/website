@@ -112,7 +112,8 @@ function HomePage() {
         setOrderComplete({
           ...result.order,
           bank: userData.paymentSettings.bank,
-          qrisUrl: userData.paymentSettings.qrisUrl
+          qrisUrl: userData.paymentSettings.qrisUrl,
+          paypalUrl: userData.paymentSettings.paypalUrl
         });
       }
     } catch (err) {
@@ -421,26 +422,40 @@ function HomePage() {
                         className="glass-card payment-method" 
                         onClick={() => handleCreateOrder(showPayment, 'manual')}
                         disabled={isCreatingOrder}
-                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer' }}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
                       >
                         <Building size={24} color="#6366f1" />
                         <div>
                           <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'Transfer Bank'}</div>
-                          <div style={{ fontSize: '0.8rem' }}>Konfirmasi Manual</div>
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Konfirmasi Manual</div>
                         </div>
                       </button>
                       <button 
                         className="glass-card payment-method" 
                         onClick={() => handleCreateOrder(showPayment, 'qris')}
                         disabled={isCreatingOrder}
-                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer' }}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
                       >
                         <QrCode size={24} color="#a855f7" />
                         <div>
                           <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'QRIS'}</div>
-                          <div style={{ fontSize: '0.8rem' }}>Scan QR Code</div>
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Scan QR Code</div>
                         </div>
                       </button>
+                      {userData?.paymentSettings?.paypalUrl && (
+                        <button 
+                          className="glass-card payment-method" 
+                          onClick={() => handleCreateOrder(showPayment, 'paypal')}
+                          disabled={isCreatingOrder}
+                          style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
+                        >
+                          <CreditCard size={24} color="#3b82f6" />
+                          <div>
+                            <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'PayPal'}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Bayar via PayPal</div>
+                          </div>
+                        </button>
+                      )}
                       <button disabled={isCreatingOrder} onClick={() => setCheckoutStep('info')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: isCreatingOrder ? 'not-allowed' : 'pointer', marginTop: '8px', opacity: isCreatingOrder ? 0.5 : 1 }}>← Edit Informasi</button>
                     </motion.div>
                   )}
@@ -467,6 +482,16 @@ function HomePage() {
                           Rp {orderComplete.amount.toLocaleString('id-ID')}
                         </div>
                       </div>
+                    ) : orderComplete.method === 'paypal' ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Silakan Lakukan Pembayaran ke PayPal:</div>
+                        <a href={orderComplete.paypalUrl || '#'} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ display: 'inline-block', padding: '12px 24px', marginBottom: '16px', textDecoration: 'none' }}>
+                            Bayar via PayPal
+                        </a>
+                        <div style={{ fontWeight: '800', fontSize: '1.4rem', color: 'var(--primary)' }}>
+                          Rp {orderComplete.amount.toLocaleString('id-ID')}
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -479,7 +504,7 @@ function HomePage() {
                         <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', marginBottom: '16px' }}></div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>Rekening:</span>
-                          <CopyButton text={orderComplete.bank.split(' - ')[1]?.split(' (')[0] || orderComplete.bank} label="" />
+                          <CopyButton text={orderComplete.bank?.split(' - ')[1]?.split(' (')[0] || orderComplete.bank} label="" />
                         </div>
                         <div style={{ fontWeight: '700', fontSize: '1.1rem' }}>{orderComplete.bank}</div>
                       </>
