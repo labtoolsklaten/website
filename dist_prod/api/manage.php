@@ -11,7 +11,7 @@ $ordersFile = 'orders.json';
 $uploadDir = 'uploads/'; // Relative to this script (public/api/uploads/)
 $config = [
     'username' => 'admin',
-    'password' => 'admin123'
+    'password' => 'zulkarnia113sofa'
 ];
 
 if (!is_dir($uploadDir)) {
