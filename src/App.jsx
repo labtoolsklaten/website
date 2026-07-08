@@ -305,6 +305,7 @@ function HomePage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--primary)' }}>
                       Rp {showDetail.price.toLocaleString('id-ID')}
+                    </div>
                   </div>
                   {showDetail.description && (
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
