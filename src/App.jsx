@@ -19,7 +19,7 @@ import {
   List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Admin from './Admin';
 import Login from './Login';
 
@@ -587,12 +587,12 @@ function App() {
   const basename = getAppRoot();
 
   return (
-    <BrowserRouter basename={basename}>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin" element={<AdminWrapper />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
