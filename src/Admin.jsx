@@ -240,7 +240,7 @@ function Admin({ initialData, onLogout, onSave }) {
                             <div>
                                 <label className="admin-label">Foto Profil</label>
                                 <div className="admin-row responsive" style={{ gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'var(--card-bg)', border: '1px solid var(--card-border)', flexShrink: 0 }}>
                                         <img src={data.avatar} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/80?text=Avatar'} />
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
@@ -314,12 +314,12 @@ function Admin({ initialData, onLogout, onSave }) {
                                             }}>{order.status === 'PAID' ? 'Lunas' : 'Menunggu'}</span>
                                         </div>
                                         <div style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
-                                            <div style={{ fontWeight: '600', color: 'white' }}>{order.customer}</div>
+                                            <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>{order.customer}</div>
                                             <div style={{ color: 'var(--text-muted)', display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <MessageCircle size={14} /> {order.whatsapp}
                                             </div>
                                             <div style={{ color: 'var(--text-muted)' }}>Produk: {order.product_name}</div>
-                                            <div style={{ color: 'white', fontWeight: '500' }}>{order.method} | Rp {order.amount.toLocaleString()}</div>
+                                            <div style={{ color: 'var(--text-main)', fontWeight: '500' }}>{order.method} | Rp {order.amount.toLocaleString()}</div>
                                         </div>
                                         {order.status === 'PENDING' ? (
                                             <div className="admin-row responsive" style={{ gap: '8px' }}>
@@ -392,7 +392,7 @@ function Admin({ initialData, onLogout, onSave }) {
                             {data.products.map(product => (
                                 <div key={product.id} className="glass-card" style={{ padding: '20px' }}>
                                     <div className="admin-row responsive admin-product-card" style={{ gap: '20px', alignItems: 'flex-start' }}>
-                                        <div className="admin-product-image-preview" style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                        <div className="admin-product-image-preview" style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'var(--card-bg)', border: '1px solid var(--card-border)', flexShrink: 0 }}>
                                             <img src={product.image} alt="Product Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/100?text=Produk'} />
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -441,7 +441,7 @@ function Admin({ initialData, onLogout, onSave }) {
                                                             }}><Trash2 size={14} /></button>
                                                         </div>
                                                     ))}
-                                                    <label className="btn-primary" style={{ padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', width: 'fit-content', color: 'white' }}>
+                                                    <label className="btn-primary" style={{ padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', width: 'fit-content', color: 'var(--text-main)' }}>
                                                         <Plus size={14} /> Tambah Gambar
                                                         <input type="file" hidden accept="image/*" onChange={e => {
                                                             if (e.target.files[0]) handleUpload(e.target.files[0], (url) => {
@@ -464,25 +464,25 @@ function Admin({ initialData, onLogout, onSave }) {
 
                 {activeAdminTab === 'payment' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
-                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'white' }}>Konfigurasi Pembayaran</h2>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--text-main)' }}>Konfigurasi Pembayaran</h2>
                         <div className="admin-stack-mobile">
                             <div>
-                                <label className="admin-label" style={{ color: 'white' }}>Detail Rekening Bank</label>
+                                <label className="admin-label" style={{ color: 'var(--text-main)' }}>Detail Rekening Bank</label>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Contoh: BCA 1234567890 a/n Nama</p>
                                 <input className="admin-input" value={data.paymentSettings.bank} onChange={e => updatePayment('bank', e.target.value)} />
                             </div>
                             <div>
-                                <label className="admin-label" style={{ color: 'white' }}>QRIS Payment</label>
+                                <label className="admin-label" style={{ color: 'var(--text-main)' }}>QRIS Payment</label>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Upload gambar QRIS Anda</p>
                                 <div className="admin-row responsive" style={{ gap: '16px', alignItems: 'center' }}>
-                                    <div style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+                                    <div style={{ width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', background: 'var(--card-bg)', border: '1px solid var(--card-border)', flexShrink: 0 }}>
                                         <img src={data.paymentSettings.qrisUrl} alt="QRIS Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120?text=QRIS'} />
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                             {data.paymentSettings.qrisUrl ? data.paymentSettings.qrisUrl.split('/').pop() : 'Belum ada gambar QRIS'}
                                         </p>
-                                        <label className="btn-primary" style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', width: 'fit-content', color: 'white' }}>
+                                        <label className="btn-primary" style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', width: 'fit-content', color: 'var(--text-main)' }}>
                                             <Upload size={18} /> Upload QRIS Baru
                                             <input type="file" hidden accept="image/*" onChange={e => {
                                                 if (e.target.files[0]) handleUpload(e.target.files[0], (url) => updatePayment('qrisUrl', url));
@@ -492,12 +492,12 @@ function Admin({ initialData, onLogout, onSave }) {
                                 </div>
                             </div>
                             <div>
-                                <label className="admin-label" style={{ color: 'white' }}>PayPal URL / Username</label>
+                                <label className="admin-label" style={{ color: 'var(--text-main)' }}>PayPal URL / Username</label>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Contoh: https://paypal.me/username</p>
                                 <input className="admin-input" value={data.paymentSettings.paypalUrl || ''} onChange={e => updatePayment('paypalUrl', e.target.value)} />
                             </div>
-                            <div style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                <p style={{ fontSize: '0.8rem', color: 'white' }}>Menerima pembayaran melalui <strong>Transfer Bank</strong>, <strong>QRIS</strong>, dan <strong>PayPal</strong>. Opsi yang tidak diisi akan otomatis disembunyikan jika kosong, namun Setidaknya Bank atau QRIS harus diisi.</p>
+                            <div style={{ padding: '12px', background: 'var(--card-bg)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>Menerima pembayaran melalui <strong>Transfer Bank</strong>, <strong>QRIS</strong>, dan <strong>PayPal</strong>. Opsi yang tidak diisi akan otomatis disembunyikan jika kosong, namun Setidaknya Bank atau QRIS harus diisi.</p>
                             </div>
                         </div>
                     </motion.div>
@@ -505,14 +505,14 @@ function Admin({ initialData, onLogout, onSave }) {
 
                 {activeAdminTab === 'notifications' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: '24px' }}>
-                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'white' }}>Pengaturan Notifikasi</h2>
+                        <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--text-main)' }}>Pengaturan Notifikasi</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div style={{ padding: '16px', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                    <h3 style={{ fontSize: '1rem', color: 'white' }}>Konfigurasi Email (SMTP)</h3>
+                                    <h3 style={{ fontSize: '1rem', color: 'var(--text-main)' }}>Konfigurasi Email (SMTP)</h3>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                         <input type="checkbox" checked={data.notificationSettings?.emailEnabled} onChange={e => setData({ ...data, notificationSettings: { ...(data.notificationSettings || {}), emailEnabled: e.target.checked } })} />
-                                        <span style={{ fontSize: '0.85rem', color: 'white' }}>Aktifkan Notif Email</span>
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Aktifkan Notif Email</span>
                                     </label>
                                 </div>
                                 <div style={{ marginBottom: '16px' }}>
@@ -542,11 +542,11 @@ function Admin({ initialData, onLogout, onSave }) {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <h3 style={{ fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <MessageCircle size={18} /> Template Notifikasi
                                 </h3>
                                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <p style={{ fontSize: '0.8rem', color: 'white', marginBottom: '8px', fontWeight: 'bold' }}>ℹ️ Informasi Tag Otomatis:</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-main)', marginBottom: '8px', fontWeight: 'bold' }}>ℹ️ Informasi Tag Otomatis:</p>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
                                         <code style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{"{customer}"}</code>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>: Nama Pembeli</span>
@@ -580,7 +580,7 @@ function Admin({ initialData, onLogout, onSave }) {
 
             <div style={{ height: '100px' }}></div>
             <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '800px', padding: '0 20px', zIndex: 100 }}>
-                <button className="btn-primary" style={{ width: '100%', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }} onClick={handleSave} disabled={loading}>
+                <button className="btn-primary" style={{ width: '100%', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid var(--card-border)' }} onClick={handleSave} disabled={loading}>
                     <Save size={20} /> {loading ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
                 </button>
             </div>
@@ -588,11 +588,11 @@ function Admin({ initialData, onLogout, onSave }) {
             <style>{`
                 .admin-tab { flex: 1; min-width: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--card-border); cursor: pointer; color: var(--text-muted); transition: all 0.3s ease; white-space: nowrap; border-radius: 12px; }
                 .admin-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-                .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: white; font-weight: 500; }
-                .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; transition: all 0.2s; -webkit-appearance: none; }
-                .admin-input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 0 2px var(--primary-glow); }
-                .admin-input::placeholder { color: rgba(255,255,255,0.3); }
-                select.admin-input option { background: #1e293b; color: white; }
+                .admin-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
+                .admin-input { width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-main); font-family: inherit; transition: all 0.2s; -webkit-appearance: none; }
+                .admin-input:focus { outline: none; border-color: var(--primary); background: var(--glass-bg); box-shadow: 0 0 0 2px var(--primary-glow); }
+                .admin-input::placeholder { color: var(--text-muted); opacity: 0.7; }
+                select.admin-input option { background: var(--card-bg); color: var(--text-main); }
                 .refresh-btn { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; padding: 8px 16px; border-radius: 12px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
                 .refresh-btn:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--primary); color: white; transform: translateY(-1px); }
                 .delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
