@@ -140,8 +140,8 @@ function HomePage() {
       <button
         onClick={handleCopy}
         style={{
-          display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)',
-          border: 'none', color: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer'
+          display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--glass-bg)',
+          border: '1px solid var(--card-border)', color: 'var(--text-main)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer'
         }}
       >
         {copied ? <Check size={14} color="#22c55e" /> : <Copy size={14} />}
@@ -161,15 +161,15 @@ function HomePage() {
       </motion.div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', justifyContent: 'center', alignItems: 'center' }}>
-        <button onClick={() => setActiveTab('links')} className={`btn-primary ${activeTab === 'links' ? '' : 'glass-card'}`} style={{ background: activeTab === 'links' ? '' : 'transparent' }}>Links</button>
-        <button onClick={() => setActiveTab('store')} className={`btn-primary ${activeTab === 'store' ? '' : 'glass-card'}`} style={{ background: activeTab === 'store' ? '' : 'transparent' }}>Store</button>
+        <button onClick={() => setActiveTab('links')} className={`btn-primary ${activeTab === 'links' ? '' : 'glass-card'}`} style={{ background: activeTab === 'links' ? 'var(--primary)' : 'transparent', color: activeTab === 'links' ? 'white' : 'var(--text-main)' }}>Informasi</button>
+        <button onClick={() => setActiveTab('store')} className={`btn-primary ${activeTab === 'store' ? '' : 'glass-card'}`} style={{ background: activeTab === 'store' ? 'var(--primary)' : 'transparent', color: activeTab === 'store' ? 'white' : 'var(--text-main)' }}>Katalog Produk</button>
 
         {activeTab === 'store' && (
-          <div style={{ display: 'flex', gap: '4px', marginLeft: '8px', padding: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-            <button onClick={() => setStoreView('grid')} style={{ padding: '6px', background: storeView === 'grid' ? 'var(--primary)' : 'transparent', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', display: 'flex' }}>
+          <div style={{ display: 'flex', gap: '4px', marginLeft: '8px', padding: '4px', background: 'var(--glass-bg)', border: '1px solid var(--card-border)', borderRadius: '10px' }}>
+            <button onClick={() => setStoreView('grid')} style={{ padding: '6px', background: storeView === 'grid' ? 'var(--primary)' : 'transparent', border: 'none', borderRadius: '6px', color: storeView === 'grid' ? 'white' : 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
               <LayoutGrid size={16} />
             </button>
-            <button onClick={() => setStoreView('list')} style={{ padding: '6px', background: storeView === 'list' ? 'var(--primary)' : 'transparent', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', display: 'flex' }}>
+            <button onClick={() => setStoreView('list')} style={{ padding: '6px', background: storeView === 'list' ? 'var(--primary)' : 'transparent', border: 'none', borderRadius: '6px', color: storeView === 'list' ? 'white' : 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
               <List size={16} />
             </button>
           </div>
@@ -247,9 +247,9 @@ function HomePage() {
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{showDetail.name}</h2>
-                <button onClick={() => setShowDetail(null)} className="close-btn" style={{ position: 'static', transform: 'none' }}><X size={20} /></button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--card-border)' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-main)' }}>{showDetail.name}</h2>
+                <button onClick={() => setShowDetail(null)} className="close-btn" style={{ position: 'static', transform: 'none', color: 'var(--text-main)' }}><X size={20} /></button>
               </div>
 
               <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '20px' }}>
@@ -305,10 +305,9 @@ function HomePage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--primary)' }}>
                       Rp {showDetail.price.toLocaleString('id-ID')}
-                    </div>
                   </div>
                   {showDetail.description && (
-                    <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.75)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
                       {showDetail.description}
                     </p>
                   )}
@@ -425,24 +424,24 @@ function HomePage() {
                         className="glass-card payment-method" 
                         onClick={() => handleCreateOrder(showPayment, 'manual')}
                         disabled={isCreatingOrder}
-                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
                       >
                         <Building size={24} color="#6366f1" />
                         <div>
                           <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'Transfer Bank'}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Konfirmasi Manual</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Konfirmasi Manual</div>
                         </div>
                       </button>
                       <button 
                         className="glass-card payment-method" 
                         onClick={() => handleCreateOrder(showPayment, 'qris')}
                         disabled={isCreatingOrder}
-                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
+                        style={{ opacity: isCreatingOrder ? 0.6 : 1, cursor: isCreatingOrder ? 'not-allowed' : 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}
                       >
                         <QrCode size={24} color="#a855f7" />
                         <div>
                           <div style={{ fontWeight: '600' }}>{isCreatingOrder ? 'Memproses...' : 'QRIS'}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>Scan QR Code</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Scan QR Code</div>
                         </div>
                       </button>
                       {userData?.paymentSettings?.paypalUrl && (
@@ -468,10 +467,10 @@ function HomePage() {
                   <CheckCircle size={56} color="#22c55e" style={{ margin: '0 auto 16px' }} />
                   <h2 style={{ marginBottom: '12px' }}>Pesanan Terkirim!</h2>
                   
-                  <div style={{ marginBottom: '20px', padding: '12px 20px', background: 'rgba(255,255,255,0.08)', borderRadius: '12px', display: 'inline-block', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  <div style={{ marginBottom: '20px', padding: '12px 20px', background: 'var(--glass-bg)', borderRadius: '12px', display: 'inline-block', border: '1px solid var(--card-border)' }}>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>Kode Pesanan</p>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                      <span style={{ fontWeight: '800', color: 'white', fontSize: '1.3rem', letterSpacing: '1.5px' }}>{orderComplete.id}</span>
+                      <span style={{ fontWeight: '800', color: 'var(--text-main)', fontSize: '1.3rem', letterSpacing: '1.5px' }}>{orderComplete.id}</span>
                       <CopyButton text={orderComplete.id} label="" />
                     </div>
                   </div>
@@ -531,7 +530,8 @@ function HomePage() {
         )}
       </AnimatePresence>
       <style>{`
-        .admin-input { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: inherit; }
+        .admin-input { width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-main); font-family: inherit; }
+        .admin-input::placeholder { color: var(--text-muted); opacity: 0.7; }
       `}</style>
     </div >
   );
