@@ -1,7 +1,7 @@
 {
-  "name": "Ahmad Digital",
+  "name": "Labtools Klaten",
   "bio": "Digital creator helping you grow your online presence. 📸 Course & Assets.",
-  "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
+  "avatar": "",
   "links": [
     {
       "id": 1,
@@ -26,13 +26,6 @@
       "price": 150000,
       "image": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=500&fit=crop",
       "driveUrl": "https://drive.google.com/sample1"
-    },
-    {
-      "id": 2,
-      "name": "Product Design Handbook",
-      "price": 250000,
-      "image": "https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?w=500&fit=crop",
-      "driveUrl": "https://drive.google.com/sample2"
     }
   ],
   "paymentSettings": {

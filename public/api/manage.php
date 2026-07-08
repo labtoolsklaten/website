@@ -15,31 +15,103 @@ $ordersFile = 'orders.json';
 $uploadDir = 'uploads/'; // Relative to this script (public/api/uploads/)
 $config = [
     'username' => 'admin',
-    'password' => 'admin123'
+    'password' => 'zulkarnia113sofa'
 ];
 
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-function getRequestData() {
+function getRequestData()
+{
     return json_decode(file_get_contents('php://input'), true);
 }
 
-function saveJson($file, $data) {
-    return file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+function getDb()
+{
+    $dbFile = __DIR__ . '/database.sqlite';
+    $pdo = new PDO('sqlite:' . $dbFile);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS json_store (
+        id_key TEXT PRIMARY KEY,
+        json_data TEXT
+    )");
+    return $pdo;
 }
 
-function loadJson($file) {
-    if (!file_exists($file)) return [];
-    return json_decode(file_get_contents($file), true);
+function saveJson($file, $data)
+{
+    try {
+        $pdo = getDb();
+        $stmt = $pdo->prepare("INSERT OR REPLACE INTO json_store (id_key, json_data) VALUES (:key, :data)");
+        $stmt->execute(['key' => $file, 'data' => json_encode($data, JSON_PRETTY_PRINT)]);
+        return true;
+    } catch (Exception $e) {
+        $filePath = __DIR__ . '/' . $file;
+        return file_put_contents($filePath, json_encode($data, JSON_PRETTY_PRINT)) !== false;
+    }
+}
+
+function loadJson($file)
+{
+    try {
+        $pdo = getDb();
+        $stmt = $pdo->prepare("SELECT json_data FROM json_store WHERE id_key = :key");
+        $stmt->execute(['key' => $file]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return json_decode($row['json_data'], true);
+        }
+
+        // Auto-migration: if row doesn't exist but JSON file does
+        $filePath = __DIR__ . '/' . $file;
+        if (file_exists($filePath)) {
+            $jsonData = file_get_contents($filePath);
+            $stmt = $pdo->prepare("INSERT OR REPLACE INTO json_store (id_key, json_data) VALUES (:key, :data)");
+            $stmt->execute(['key' => $file, 'data' => $jsonData]);
+            return json_decode($jsonData, true);
+        }
+    } catch (Exception $e) {
+        // Fallback to JSON if SQLite fails (e.g. driver missing)
+        $filePath = __DIR__ . '/' . $file;
+        if (file_exists($filePath)) {
+            return json_decode(file_get_contents($filePath), true);
+        }
+    }
+    return [];
 }
 
 $action = $_GET['action'] ?? '';
 
 // --- PUBLIC ACTIONS ---
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_data') {
-    echo file_get_contents($dataFile);
+    try {
+        $pdo = getDb();
+        $stmt = $pdo->prepare("SELECT json_data FROM json_store WHERE id_key = :key");
+        $stmt->execute(['key' => $dataFile]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            echo $row['json_data'];
+        } else {
+            // Auto-migration
+            $filePath = __DIR__ . '/' . $dataFile;
+            if (file_exists($filePath)) {
+                $jsonData = file_get_contents($filePath);
+                $stmt = $pdo->prepare("INSERT OR REPLACE INTO json_store (id_key, json_data) VALUES (:key, :data)");
+                $stmt->execute(['key' => $dataFile, 'data' => $jsonData]);
+                echo $jsonData;
+            } else {
+                echo json_encode(["name" => "Sistem Baru", "products" => [], "links" => []]);
+            }
+        }
+    } catch (Exception $e) {
+        $filePath = __DIR__ . '/' . $dataFile;
+        if (file_exists($filePath)) {
+            echo file_get_contents($filePath);
+        } else {
+            echo json_encode(["name" => "Error DB", "bio" => $e->getMessage()]);
+        }
+    }
     exit;
 }
 
@@ -58,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
     $req = getRequestData();
     $orders = loadJson($ordersFile);
-    
+
     $newOrder = [
         'id' => 'ORD-' . strtoupper(substr(uniqid(), 8, 4)),
         'customer' => $req['customer'] ?? 'Anonymous',
@@ -71,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
         'status' => 'PENDING',
         'created_at' => date('Y-m-d H:i:s')
     ];
-    
+
     $orders[] = $newOrder;
     saveJson($ordersFile, $orders);
 
@@ -82,12 +154,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            $mail->Host       = $notif['smtpHost'] ?? '';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $notif['smtpUser'] ?? '';
-            $mail->Password   = $notif['smtpPass'] ?? '';
-            $mail->Port       = $notif['smtpPort'] ?? 587;
-            
+            $mail->Host = $notif['smtpHost'] ?? '';
+            $mail->SMTPAuth = true;
+            $mail->Username = $notif['smtpUser'] ?? '';
+            $mail->Password = $notif['smtpPass'] ?? '';
+            $mail->Port = $notif['smtpPort'] ?? 587;
+
             if ($mail->Port == 587 || $mail->Port == 25) {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             } else {
@@ -100,16 +172,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_order') {
             $mail->isHTML(true);
             $mail->Subject = "Pesanan Baru Masuk: {$newOrder['product_name']} ({$newOrder['customer']})";
             $rawBody = "Halo Admin,\n\nAda pesanan baru yang masuk ke sistem. Berikut rinciannya:\n\n"
-                           . "ID Pesanan: {$newOrder['id']}\n"
-                           . "Nama Pembeli: {$newOrder['customer']}\n"
-                           . "WhatsApp: {$newOrder['whatsapp']}\n"
-                           . "Email: {$newOrder['email']}\n"
-                           . "Produk: {$newOrder['product_name']}\n"
-                           . "Nominal Bayar: Rp " . number_format($newOrder['amount'], 0, ',', '.') . "\n"
-                           . "Metode: " . strtoupper($newOrder['method']) . "\n"
-                           . "Waktu: {$newOrder['created_at']}\n\n"
-                           . "Silakan cek panel admin Anda untuk melakukan verifikasi pembayaran.\n\n"
-                           . "Terima kasih.";
+                . "ID Pesanan: {$newOrder['id']}\n"
+                . "Nama Pembeli: {$newOrder['customer']}\n"
+                . "WhatsApp: {$newOrder['whatsapp']}\n"
+                . "Email: {$newOrder['email']}\n"
+                . "Produk: {$newOrder['product_name']}\n"
+                . "Nominal Bayar: Rp " . number_format($newOrder['amount'], 0, ',', '.') . "\n"
+                . "Metode: " . strtoupper($newOrder['method']) . "\n"
+                . "Waktu: {$newOrder['created_at']}\n\n"
+                . "Silakan cek panel admin Anda untuk melakukan verifikasi pembayaran.\n\n"
+                . "Terima kasih.";
             $mail->Body = nl2br($rawBody);
             $mail->AltBody = $rawBody;
 
@@ -141,11 +213,11 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['status' => 'error', 'message' => 'No file uploaded']);
         exit;
     }
-    
+
     $file = $_FILES['file'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    
+
     if (!in_array($ext, $allowed)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid file type']);
         exit;
@@ -153,7 +225,7 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $filename = time() . '_' . uniqid() . '.' . $ext;
     $target = $uploadDir . $filename;
-    
+
     if (move_uploaded_file($file['tmp_name'], $target)) {
         // Return URL relative to the dist root
         echo json_encode(['status' => 'success', 'url' => 'api/uploads/' . $filename]);
@@ -181,13 +253,13 @@ if ($action === 'get_orders') {
 
     foreach ($orders as &$order) {
         $driveLink = "";
-        foreach($data['products'] as $p) {
+        foreach ($data['products'] as $p) {
             if ($p['id'] == $order['product_id']) {
                 $driveLink = $p['driveUrl'];
                 break;
             }
         }
-        
+
         $message = str_replace(
             ['{customer}', '{product_name}', '{drive_link}'],
             [$order['customer'], $order['product_name'], $driveLink],
@@ -195,7 +267,8 @@ if ($action === 'get_orders') {
         );
 
         $waNumber = preg_replace('/[^0-9]/', '', $order['whatsapp']);
-        if (strpos($waNumber, '0') === 0) $waNumber = '62' . substr($waNumber, 1);
+        if (strpos($waNumber, '0') === 0)
+            $waNumber = '62' . substr($waNumber, 1);
         $order['wa_link'] = "https://wa.me/" . $waNumber . "?text=" . urlencode($message);
     }
     echo json_encode($orders);
@@ -206,13 +279,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_order') {
     $req = getRequestData();
     $orders = loadJson($ordersFile);
     $newOrders = [];
-    
+
     foreach ($orders as $order) {
         if ($order['id'] !== $req['order_id']) {
             $newOrders[] = $order;
         }
     }
-    
+
     saveJson($ordersFile, $newOrders);
     echo json_encode(['status' => 'success']);
     exit;
@@ -262,7 +335,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
     }
 
     $driveLink = "";
-    foreach($data['products'] as $p) {
+    foreach ($data['products'] as $p) {
         if ($p['id'] == $targetOrder['product_id']) {
             $driveLink = $p['driveUrl'];
             break;
@@ -284,12 +357,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = $notif['smtpHost'] ?? '';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $notif['smtpUser'] ?? '';
-        $mail->Password   = $notif['smtpPass'] ?? '';
-        $mail->Port       = $notif['smtpPort'] ?? 587;
-        
+        $mail->Host = $notif['smtpHost'] ?? '';
+        $mail->SMTPAuth = true;
+        $mail->Username = $notif['smtpUser'] ?? '';
+        $mail->Password = $notif['smtpPass'] ?? '';
+        $mail->Port = $notif['smtpPort'] ?? 587;
+
         if ($mail->Port == 587 || $mail->Port == 25) {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         } else {
@@ -304,7 +377,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
 
         $mail->isHTML(true);
         $mail->Subject = $subject;
-        
+
         $htmlBody = "
         <!DOCTYPE html>
         <html>
@@ -317,8 +390,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
         </body>
         </html>
         ";
-        
-        $mail->Body    = $htmlBody;
+
+        $mail->Body = $htmlBody;
         $mail->AltBody = $body;
 
         $mail->send();
@@ -327,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'send_email_order') {
         error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
         echo json_encode(['status' => 'error', 'message' => $mail->ErrorInfo]);
     }
-    
+
     exit;
 }
 

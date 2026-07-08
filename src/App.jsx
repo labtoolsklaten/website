@@ -57,6 +57,12 @@ function HomePage() {
   const APP_ROOT = getAppRoot();
   const API_BASE = APP_ROOT + '/api/manage.php';
 
+  const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/')) return url;
+    return APP_ROOT + '/' + url;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -149,7 +155,7 @@ function HomePage() {
   return (
     <div className="container" style={{ paddingBottom: '60px' }}>
       <motion.div className="profile-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <img src={userData.avatar} alt={userData.name} className="avatar" />
+        <img src={resolveImageUrl(userData.avatar)} alt={userData.name} className="avatar" />
         <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>{userData.name}</h1>
         <p style={{ color: 'var(--text-muted)', lineHeight: '1.5' }}>{userData.bio}</p>
       </motion.div>
@@ -200,7 +206,7 @@ function HomePage() {
                   onClick={() => { setShowDetail(product); setDetailImgIdx(0); }}
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <img src={product.image} alt={product.name} className="product-image" style={storeView === 'list' ? { width: '60px', height: '60px', borderRadius: '10px', marginBottom: 0 } : {}} />
+                    <img src={resolveImageUrl(product.image)} alt={product.name} className="product-image" style={storeView === 'list' ? { width: '60px', height: '60px', borderRadius: '10px', marginBottom: 0 } : {}} />
                     {allImages.length > 1 && storeView === 'grid' && (
                       <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', borderRadius: '20px', padding: '2px 8px', fontSize: '0.7rem', color: 'white' }}>
                         +{allImages.length - 1}
@@ -257,7 +263,7 @@ function HomePage() {
                         style={{ width: '100%', aspectRatio: '4/3', borderRadius: '14px', overflow: 'hidden', background: 'rgba(0,0,0,0.3)', cursor: 'zoom-in', marginBottom: '10px', position: 'relative' }}
                         onClick={() => setLightboxOpen(true)}
                       >
-                        <img src={imgs[detailImgIdx] || showDetail.image} alt={showDetail.name}
+                        <img src={resolveImageUrl(imgs[detailImgIdx] || showDetail.image)} alt={showDetail.name}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '8px', padding: '4px 8px', fontSize: '0.7rem', color: 'white' }}>
                           🔍 Klik untuk zoom
@@ -275,7 +281,7 @@ function HomePage() {
                                 cursor: 'pointer', transition: 'border 0.2s'
                               }}
                             >
-                              <img src={img} alt={`thumb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={resolveImageUrl(img)} alt={`thumb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           ))}
                         </div>
@@ -299,9 +305,6 @@ function HomePage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--primary)' }}>
                       Rp {showDetail.price.toLocaleString('id-ID')}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', padding: '4px 10px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px' }}>
-                      Produk Digital
                     </div>
                   </div>
                   {showDetail.description && (
@@ -341,7 +344,7 @@ function HomePage() {
               <motion.img
                 key={detailImgIdx}
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                src={imgs[detailImgIdx]} alt="zoom"
+                src={resolveImageUrl(imgs[detailImgIdx])} alt="zoom"
                 style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '12px', objectFit: 'contain' }}
                 onClick={e => e.stopPropagation()}
               />
@@ -351,7 +354,7 @@ function HomePage() {
                     <div key={i} onClick={() => setDetailImgIdx(i)}
                       style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', border: detailImgIdx === i ? '2px solid var(--primary)' : '2px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}
                     >
-                      <img src={img} alt={`lb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={resolveImageUrl(img)} alt={`lb-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}
                 </div>
@@ -390,9 +393,9 @@ function HomePage() {
 
                   {/* Multiple Images Gallery */}
                   <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px' }}>
-                    <img src={showPayment.image} alt={showPayment.name} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                    <img src={resolveImageUrl(showPayment.image)} alt={showPayment.name} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                     {showPayment.images?.map((img, i) => img && (
-                      <img key={i} src={img} alt={`${showPayment.name} ${i + 1}`} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                      <img key={i} src={resolveImageUrl(img)} alt={`${showPayment.name} ${i + 1}`} style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                     ))}
                   </div>
 
@@ -477,7 +480,7 @@ function HomePage() {
                     {orderComplete.method === 'qris' ? (
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Silakan Scan QRIS di bawah:</div>
-                        <img src={orderComplete.qrisUrl} alt="QRIS" style={{ width: '200px', height: '200px', borderRadius: '12px', marginBottom: '16px', background: 'white', padding: '10px' }} />
+                        <img src={resolveImageUrl(orderComplete.qrisUrl)} alt="QRIS" style={{ width: '200px', height: '200px', borderRadius: '12px', marginBottom: '16px', background: 'white', padding: '10px' }} />
                         <div style={{ fontWeight: '800', fontSize: '1.4rem', color: 'var(--primary)' }}>
                           Rp {orderComplete.amount.toLocaleString('id-ID')}
                         </div>
